@@ -1,0 +1,128 @@
+Introduction
+Beneficiary Wallets are wallets that are outside the Avenia API ecosystem. You can register any external wallet here for future operations on your business account or sub-account, if applicable.
+
+Create Beneficiary Wallet
+Registering a new beneficiary wallet is straightforward. Let’s look at the required fields:
+
+Fields
+Field	Type	Required	Description
+alias	string	Yes	A custom name for the wallet to help identify it.
+description	string	No	A brief description of the wallet.
+walletAddress	string	Yes	The blockchain wallet address.
+walletChain	string	Yes	The blockchain network of the wallet (e.g., POLYGON, CELO, ETHEREUM, GNOSIS, MOONBEAM and TRON
+walletMemo	string	No	Memo for the wallet.
+info
+To perform this operation for a sub-account, pass the subAccountId field as a parameter to this endpoint.
+
+HTTP Post Request
+https://api.sandbox.avenia.io:10952/v2/account/beneficiaries/wallets/
+
+Sample JSON Body
+{
+  "alias": "ExampleAlias",
+  "description": "Example description",
+  "walletAddress": "0xXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+  "walletChain": "POLYGON",
+  "walletMemo": "memooo"
+}
+
+cUrl Example
+curl -X POST "https://api.sandbox.avenia.io:10952/v2/account/beneficiaries/wallets/" \
+-H "Content-Type: application/json" \
+-H "Authorization: Bearer eyJhdXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" \
+-d '{
+  "alias": "ExampleAlias",
+  "description": "Example description",
+  "walletAddress": "0xXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+  "walletChain": "POLYGON",
+  "walletMemo": "memooo"
+}'
+
+JSON Response
+{
+  "id": "76971925-a1ca-423f-badf-0b3f2b03c51c"
+}
+
+Get all Beneficiary Wallets
+Retrieve a list of all registered beneficiary wallets using filters and pagination.
+
+HTTP Get Request
+https://api.sandbox.avenia.io:10952/v2/account/beneficiaries/wallets/
+
+URL Parameters
+Field	Type	Description
+alias	string	Filters results to include only those with the specified alias.
+walletAddress	string	Filters results to include only those with the specified wallet address.
+walletChain	string	Filters results to include only those on a specific blockchain chain.
+createdAfter	int64	Filters results to include only those created after this timestamp.
+createdBefore	int64	Filters results to include only those created before this timestamp.
+cursor	string	Cursor for pagination. Pass the value from the previous response to retrieve the next set of results.
+info
+To fetch wallets for a specific subAccount, pass the subAccountId field as an endpoint parameter. If you don’t pass it, it will fetch from your Main Account.
+
+cUrl Example
+curl -X GET "https://api.sandbox.avenia.io:10952/v2/account/beneficiaries/wallets/?alias=ExampleAlias&walletAddress=0xXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX&walletChain=POLYGON&createdAfter=1700000000&createdBefore=1800000000&cursor=NEXT_CURSOR" \
+-H "Authorization: Bearer eyJhdXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+
+
+JSON Response
+{
+  "wallets": [
+    {
+      "id": "00000000-0000-0000-0000-000000000000",
+      "alias": "ExampleAlias",
+      "description": "Example description",
+      "walletAddress": "0xXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+      "walletChain": "POLYGON",
+      "walletMemo": "memo",
+      "createdAt": "2025-02-20T14:13:02.065846Z"
+    }
+  ],
+  "cursor": "MjAtMTc0MDA2MDc4MjA2NQ..."
+}
+
+Get Beneficiary Wallet by ID
+Retrieve the details of a specific beneficiary wallet:
+
+HTTP Get Request
+https://api.sandbox.avenia.io:10952/v2/account/beneficiaries/wallets/{YOUR_UUID_ID}
+
+cUrl Example
+curl -X GET \
+  "https://api.sandbox.avenia.io:10952/v2/account/beneficiaries/wallets/{YOUR_UUID_ID}" \
+  -H "Authorization: Bearer eyJhdXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+
+JSON Response
+{
+  "id": "00000000-0000-0000-0000-000000000000",
+  "alias": "ExampleAlias",
+  "description": "Example description",
+  "walletAddress": "0xXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+  "walletChain": "POLYGON",
+  "walletMemo": "memo",
+  "createdAt": "2025-02-20T14:13:02.065846Z"
+}
+
+Delete Beneficiary Wallet
+Delete a specific beneficiary wallet:
+
+HTTP Delete Request
+https://api.sandbox.avenia.io:10952/v2/account/beneficiaries/wallets/{YOUR_UUID_ID}
+
+cUrl Example
+curl -X DELETE "https://api.sandbox.avenia.io:10952/v2/account/beneficiaries/wallets/00000000-0000-0000-0000-000000000000" \
+-H "Authorization: Bearer eyJhdXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+
+
+Your wallet has been permanently removed from the system.
+
+Conclusion
+In this section, you have learned how to manage Beneficiary Wallets within the system.
+
+What we’ve covered:
+
+✅ Creating a Beneficiary Wallet
+✅ Fetching all Beneficiary Wallets
+✅ Retrieving a Specific Wallet by ID
+✅ Deleting a Wallet
+You now have a clear understanding of how to handle Beneficiary Wallets efficiently.

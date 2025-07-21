@@ -1,14 +1,55 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import Image from "next/image"
-import { Button } from "~/components/ui/button"
+import { useRouter } from "next/navigation"
+import { Button } from "~/components/ui/Button"
 import { motion } from "framer-motion"
 
 interface ScreenProps {
-  onNext: () => void
+  onNext?: () => void
 }
 
-export function ReadyScreen({ onNext }: ScreenProps) {
+interface User {
+  id: string;
+  email: string;
+  kycStatus: 'not_started' | 'in_progress' | 'completed' | 'rejected';
+}
+
+export function ReadyScreen({ onNext }: ScreenProps = {}) {
+  const router = useRouter()
+  const [user, setUser] = useState<User | null>(null)
+
+  // Check user status
+  useEffect(() => {
+    const savedUser = localStorage.getItem('rendex_user');
+    
+    if (savedUser) {
+      try {
+        const userData = JSON.parse(savedUser);
+        console.log('[ReadyScreen] Found user with KYC status:', userData.kycStatus);
+        setUser(userData);
+        
+        // KYC paused - redirect to dashboard
+        console.log('[ReadyScreen] KYC paused, redirecting to dashboard');
+        router.push("/dashboard");
+      } catch (error) {
+        console.error('[ReadyScreen] Failed to parse saved user:', error);
+        router.push("/welcome");
+      }
+    } else {
+      console.log('[ReadyScreen] No user found, redirecting to welcome');
+      router.push("/welcome");
+    }
+  }, [router]);
+  
+  const handleNext = () => {
+    if (onNext) {
+      onNext()
+    } else {
+      router.push("/notifications")
+    }
+  }
   return (
     <motion.div 
       className="min-h-screen w-full bg-[#D6EDF8] flex flex-col justify-between items-center text-center"
@@ -43,7 +84,7 @@ export function ReadyScreen({ onNext }: ScreenProps) {
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.6, duration: 0.6 }}
         >
-          Your account is ready!
+          Identity Verified! 🎉
         </motion.h1>
         <motion.p 
           className="text-gray-600 max-w-xs mx-auto mb-8"
@@ -51,8 +92,24 @@ export function ReadyScreen({ onNext }: ScreenProps) {
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.8, duration: 0.6 }}
         >
-          Now you have complete control over your account. It's time to improve yourself and earn money!
+          Your Avenia account is verified and ready! You can now access PIX payments, investments, and all RendeX features.
         </motion.p>
+        
+        {user && (
+          <motion.div
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 1, duration: 0.6 }}
+            className="bg-green-100 border border-green-300 rounded-lg p-3 mb-6 max-w-xs mx-auto"
+          >
+            <p className="text-sm text-green-800">
+              <strong>Account:</strong> {user.email}
+            </p>
+            <p className="text-sm text-green-800">
+              <strong>Status:</strong> Verified ✓
+            </p>
+          </motion.div>
+        )}
         <motion.div
           initial={{ y: 50, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -61,10 +118,10 @@ export function ReadyScreen({ onNext }: ScreenProps) {
           whileTap={{ scale: 0.98 }}
         >
           <Button
-            onClick={onNext}
+            onClick={handleNext}
             className="w-full bg-primary-blue hover:bg-primary-blue/90 text-white rounded-xl h-14 text-lg"
           >
-            Let's go
+            Let&apos;s go
           </Button>
         </motion.div>
       </motion.div>

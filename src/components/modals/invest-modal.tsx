@@ -1,7 +1,7 @@
 "use client"
 
 import Image from "next/image"
-import { Button } from "~/components/ui/button"
+import { Button } from "~/components/ui/Button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "~/components/ui/card"
 import { motion } from "framer-motion"
 
@@ -10,7 +10,7 @@ interface InvestModalProps {
   onPixInvest: () => void
 }
 
-export function InvestModal({ onClose, onPixInvest }: InvestModalProps) {
+export function InvestModal({ onClose: _onClose, onPixInvest }: InvestModalProps) {
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.8, y: 50 }}

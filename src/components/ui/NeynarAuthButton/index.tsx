@@ -536,6 +536,7 @@ export function NeynarAuthButton() {
 
       handleSignerFlow();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [message, signature]); // Simplified dependencies
 
   // Backend flow using NextAuth

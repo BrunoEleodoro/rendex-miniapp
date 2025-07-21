@@ -1,0 +1,1309 @@
+
+--- Page 1 ---
+Use casesPIX2STABLE <> OnChain Transfer
+PIX2STABLE - OnChain
+Transfer
+You have received your credentials, and now weʼll walk through a complete use case that
+expands upon the basic PIX to STABLE and then after on-chain conversions and transfers flow:
+Use Case: PIX to BRLA → USDC/USDT → Subaccounts → External Wallets
+This flow starts with a deposit in local currency via PIX to the BRLA stablecoin. From there,
+BRLA is exchanged for another stable asset such as USDC or USDT.
+Once the stable assets are available, subaccounts can be created to organize and segregate
+balances. Funds are then transferred from the main account to the respective subaccounts as
+needed.
+Finally, tokens held in subaccounts can be transferred to external wallets.
+What Will We Cover Here?
+Login
+KYC
+Subaccount creation
+Subaccount KYC
+About Webhooks
+Deposit via PIX to BRLA (Funds credited to Main Account in BRLA Stablecoin)
+Convert BRLA to USDC or USDT
+Transfer Tokens to Subaccounts
+Send Tokens from Subaccounts to External Wallets
+Login
+Once you receive your credentials, use the following endpoint to authenticate and receive your
+JWT.
+18.07.25, 15:08 PIX2STABLE <> OnChain Transfer | Avenia API
+https://integration-guide.avenia.io/docs/Usecases/pix2Stable&onChainTransfer 1/41
+--- Page 2 ---
+INFO
+We highly recommend creating API Keys for security and convenience.
+HTTP POST Request
+Sample JSON Body
+cUrl Example
+Upon a successful login (HTTP 200), you will receive an email with a token to validate your
+login.
+Validate Login
+Using the token (emailToken) sent to your email, call the following endpoint to receive your
+authentication codes (JWT):
+HTTP POST Requesthttps://api.sandbox.avenia.io:10952/v2/auth/login
+{
+  "email": "your.email@provider.com",
+  "password": "UseAStrongPassword123!"
+}
+curl -X POST "https://api.sandbox.avenia.io:10952/v2/auth/login" \\
+ -H "Content-Type: application/json" \\
+ -d '{
+     "email": "your.email@provider.com",
+     "password": "UseAStrongPassword123!"
+ }'
+https://api.sandbox.avenia.io:10952/v2/auth/validate-login18.07.25, 15:08 PIX2STABLE <> OnChain Transfer | Avenia API
+https://integration-guide.avenia.io/docs/Usecases/pix2Stable&onChainTransfer 2/41
+--- Page 3 ---
+Sample JSON Body
+cUrl Example
+JSON Response
+KYC Main Account
+KYC (Know Your Customer) is essential to track who is moving or receiving funds.
+INFO
+Weʼll soon see that, to perform KYC on a subaccount, itʼs enough to include the
+subAccountId field as a parameter in the request.
+HTTP POST Request{
+  "email": "your.email@provider.com",
+  "emailToken": "777777"
+}
+curl -X POST "https://api.sandbox.avenia.io:10952/v2/auth/validate-
+login" \\
+ -H "Content-Type: application/json" \\
+ -d '{
+     "email": "your.email@provider.com",
+     "emailToken": "777777"
+ }'
+{
+  "accessToken": "eyJhdXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+  "refreshToken": "eyJhbdXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+}
+https://api.sandbox.avenia.io:10952/v2/kyc/level-1/api18.07.25, 15:08 PIX2STABLE <> OnChain Transfer | Avenia API
+https://integration-guide.avenia.io/docs/Usecases/pix2Stable&onChainTransfer 3/41
+--- Page 4 ---
+FieldTypeRequired Description
+fullName stringYesThe complete name of the individual.
+dateOfBirth stringYesThe date of birth of the individual (Format:
+YYYY-MM-DD).
+countryOfDocumentstringYesThe country issuing the document.
+documentType stringYesThe type of document (must be one of ID,
+Passport, Driver's License).
+documentNumberstringYesThe number of the document.
+countryOfTaxIdstringYesThe country where the tax identification
+number was issued.
+taxIdNumber stringYesThe tax identification number of the
+individual.
+email stringNoThe email address of the individual.
+phone stringNoThe phone number of the individual.
+country stringYesThe country of residence.
+state stringYesThe state/province of residence.
+city stringYesThe city of residence.
+zipCode stringYesThe postal code of the residence.
+streetAddress stringYesThe street address of the residence.
+INFO
+All countries and states follow the ISO Alpha-3 standard (Example: USA-CA)
+Sample JSON Body18.07.25, 15:08 PIX2STABLE <> OnChain Transfer | Avenia API
+https://integration-guide.avenia.io/docs/Usecases/pix2Stable&onChainTransfer 4/41
+--- Page 5 ---
+cUrl Example
+JSON Response{
+  "fullName": "Jane Doe",
+  "dateOfBirth": "1999-08-16",
+  "countryOfDocument": "BRA",
+  "documentType": "Passport",
+  "documentNumber": "UJ252482",
+  "countryOfTaxId": "BRA",
+  "taxIdNumber": "75764220173",
+  "country": "BRA",
+  "state": "SP",
+  "city": "SP",
+  "zipCode": "12243010",
+  "streetAddress": "Rua Madre Paula"
+}
+curl -X POST "https://api.sandbox.avenia.io:10952/v2/kyc/level-1/api"
+ -H "Authorization: Bearer 
+eyJhdXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+ -H "Content-Type: application/json"
+ -d '{
+     "fullName" : "Jane Doe",
+     "dateOfBirth" : "1999-08-16",
+     "countryOfDocument" : "BRA",
+     "documentType" : "Passport",
+     "documentNumber" : "UJ252482",
+     "countryOfTaxId" : "BRA",
+     "taxIdNumber" : "75764220173",
+     "country" : "BRA",
+     "state" : "SP",
+     "city" : "SP",
+     "zipCode" : "12243010",
+     "streetAddress" : "Rua Madre Paula"
+ }
+{
+  "id": "1ee11163-9tjb-4389-9f84-074ccff7085d"
+}18.07.25, 15:08 PIX2STABLE <> OnChain Transfer | Avenia API
+https://integration-guide.avenia.io/docs/Usecases/pix2Stable&onChainTransfer 5/41
+--- Page 6 ---
+KYC - Track KYC Validation
+Before proceeding, ensure that the KYC for the main account has been successfully validated.
+Use the following GET endpoint:
+HTTP GET Request
+cUrl Example
+JSON Response - COMPLETED example
+JSON Response - PENDING examplehttps://api.sandbox.avenia.io:10952/v2/kyc/attempts/**YOUR-KYC-ID-
+HERE**
+curl -X GET "https://api.sandbox.avenia.io:10952/v2/kyc/attempts/{kyc-
+attempt-id}" \
+ -H "Authorization: Bearer 
+eyJhdXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+{
+  "attempt": {
+    "id": "e51359cd-04b0-4bbc-bf7d-0ee515112d74",
+    "levelName": "level-1",
+    "submissionData": null,
+    "status": "COMPLETED",
+    "result": "APPROVED",
+    "resultMessage": "",
+    "retryable": false,
+    "createdAt": "2025-03-25T07:39:40.54713Z",
+    "updatedAt": "2025-03-25T07:39:40.54713Z"
+  }
+}
+{
+  "attempt": {
+    "id": "b83802a1-afe9-46ac-96d6-ade6c5961bd3",
+    "levelName": "level-1",18.07.25, 15:08 PIX2STABLE <> OnChain Transfer | Avenia API
+https://integration-guide.avenia.io/docs/Usecases/pix2Stable&onChainTransfer 6/41
+--- Page 7 ---
+JSON Response - REJECT example
+Create Subaccount
+To register your client, create a subaccount. Subaccounts allow the Main Account (you) to
+manage your clients.
+HTTP POST Request
+FieldType Description
+accountTypestringSpecify "INDIVIDUAL" for a personal subaccount.    "submissionData": null,
+    "status": "PENDING",
+    "result": "",
+    "resultMessage": "",
+    "retryable": false,
+    "createdAt": "2025-03-26T22:50:14.201695Z",
+    "updatedAt": "2025-03-26T22:50:14.201695Z"
+  }
+}
+{
+  "attempt": {
+    "id": "5bafd6cd-ec40-4dd3-83e0-a5af117c304a",
+    "levelName": "level-1",
+    "submissionData": null,
+    "status": "COMPLETED",
+    "result": "REJECTED",
+    "resultMessage": "name does not match",
+    "retryable": false,
+    "createdAt": "2025-03-26T22:50:14.201695Z",
+    "updatedAt": "2025-03-26T22:50:14.201695Z"
+  }
+}
+https://api.sandbox.avenia.io:10952/v2/account/sub-accounts18.07.25, 15:08 PIX2STABLE <> OnChain Transfer | Avenia API
+https://integration-guide.avenia.io/docs/Usecases/pix2Stable&onChainTransfer 7/41
+--- Page 8 ---
+FieldType Description
+name stringA name for the subaccount (e.g., "Jane Doe").
+Sample JSON Body
+cUrl Example
+JSON Response
+The response will include the ID of the created subaccount.
+KYC for Subaccount
+KYC (Know Your Customer) is essential to track who is moving or receiving funds. For
+subaccounts, perform KYC using the API endpoint below. Be sure to pass the subAccountId
+parameter.{
+  "accountType": "INDIVIDUAL",
+  "name": "Jane Doe"
+}
+curl -X POST "https://api.sandbox.avenia.io:10952/v2/account/sub-
+accounts" \
+ -H "Authorization: Bearer 
+eyJhdXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" \
+ -H "Content-Type: application/json"
+ -d '{
+     "accountType": "INDIVIDUAL",
+     "name": "Jane Doe"
+ }'
+{
+  "id": "1ee0a663-922b-4389-9f84-074ccff7085d"
+}18.07.25, 15:08 PIX2STABLE <> OnChain Transfer | Avenia API
+https://integration-guide.avenia.io/docs/Usecases/pix2Stable&onChainTransfer 8/41
+--- Page 9 ---
+Since this operation is performed for a subaccount, you must include the field as an endpoint
+parameter subAccountId.
+HTTP POST Request
+FieldTypeRequired Description
+fullName stringYesThe complete name of the individual.
+dateOfBirth stringYesThe date of birth of the individual (Format:
+YYYY-MM-DD).
+countryOfDocumentstringYesThe country issuing the document.
+documentType stringYesThe type of document (must be one of ID,
+Passport, Driver's License).
+documentNumberstringYesThe number of the document.
+countryOfTaxIdstringYesThe country where the tax identification
+number was issued.
+taxIdNumber stringYesThe tax identification number of the
+individual.
+email stringNoThe email address of the individual.
+phone stringNoThe phone number of the individual.
+country stringYesThe country of residence.
+state stringYesThe state/province of residence.
+city stringYesThe city of residence.https://api.sandbox.avenia.io:10952/v2/kyc/level-1/api?
+subAccountId=1ee0a663-922b-4389-9f84-074ccff7085d18.07.25, 15:08 PIX2STABLE <> OnChain Transfer | Avenia API
+https://integration-guide.avenia.io/docs/Usecases/pix2Stable&onChainTransfer 9/41
+--- Page 10 ---
+FieldTypeRequired Description
+zipCode stringYesThe postal code of the residence.
+streetAddress stringYesThe street address of the residence.
+INFO
+All countries and states follow the ISO Alpha-3 standard (Example: USA-CA)
+Sample JSON Body
+cUrl Example{
+  "fullName": "Jane Doe",
+  "dateOfBirth": "1999-08-16",
+  "countryOfDocument": "BRA",
+  "documentType": "Passport",
+  "documentNumber": "UJ252482",
+  "countryOfTaxId": "BRA",
+  "taxIdNumber": "75764220173",
+  "country": "BRA",
+  "state": "SP",
+  "city": "SP",
+  "zipCode": "12243010",
+  "streetAddress": "Rua Madre Paula"
+}
+curl -X POST "https://api.sandbox.avenia.io:10952/v2/kyc/level-1/api?
+subAccountId=1ee0a663-922b-4389-9f84-074ccff7085d"
+ -H "Authorization: Bearer 
+eyJhdXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+ -H "Content-Type: application/json"
+ -d '{
+     "fullName" : "Jane Doe",
+     "dateOfBirth" : "1999-08-16",
+     "countryOfDocument" : "BRA",
+     "documentType" : "Passport",
+     "documentNumber" : "UJ252482",
+     "countryOfTaxId" : "BRA",18.07.25, 15:08 PIX2STABLE <> OnChain Transfer | Avenia API
+https://integration-guide.avenia.io/docs/Usecases/pix2Stable&onChainTransfer 10/41
+--- Page 11 ---
+JSON Response
+Track KYC Subaccount Validation
+Before proceeding, ensure that the KYC for the subaccount has been successfully validated.
+Use the following GET endpoint:
+Since this operation is performed for a subaccount, you must include the field as an endpoint
+parameter subAccountId.
+HTTP GET Request
+cUrl Example
+JSON Response - COMPLETED example     "taxIdNumber" : "75764220173",
+     "country" : "BRA",
+     "state" : "SP",
+     "city" : "SP",
+     "zipCode" : "12243010",
+     "streetAddress" : "Rua Madre Paula"
+ }
+{
+  "id": "1ee11163-9tjb-4389-9f84-074ccff7085d"
+}
+https://api.sandbox.avenia.io:10952/v2/kyc/attempts/**YOUR-KYC-ID-
+HERE**?subAccountId=1ee0a663-922b-4389-9f84-074ccff7085d
+curl -X GET "https://api.sandbox.avenia.io:10952/v2/kyc/attempts/{kyc-
+attempt-id}?subAccountId=1ee0a663-922b-4389-9f84-074ccff7085d" \
+ -H "Authorization: Bearer 
+eyJhdXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"18.07.25, 15:08 PIX2STABLE <> OnChain Transfer | Avenia API
+https://integration-guide.avenia.io/docs/Usecases/pix2Stable&onChainTransfer 11/41
+--- Page 12 ---
+JSON Response - PENDING example
+JSON Response - REJECT example{
+  "attempt": {
+    "id": "e51359cd-04b0-4bbc-bf7d-0ee515112d74",
+    "levelName": "level-1",
+    "submissionData": null,
+    "status": "COMPLETED",
+    "result": "APPROVED",
+    "resultMessage": "",
+    "retryable": false,
+    "createdAt": "2025-03-25T07:39:40.54713Z",
+    "updatedAt": "2025-03-25T07:39:40.54713Z"
+  }
+}
+{
+  "attempt": {
+    "id": "b83802a1-afe9-46ac-96d6-ade6c5961bd3",
+    "levelName": "level-1",
+    "submissionData": null,
+    "status": "PENDING",
+    "result": "",
+    "resultMessage": "",
+    "retryable": false,
+    "createdAt": "2025-03-26T22:50:14.201695Z",
+    "updatedAt": "2025-03-26T22:50:14.201695Z"
+  }
+}
+{
+  "attempt": {
+    "id": "5bafd6cd-ec40-4dd3-83e0-a5af117c304a",
+    "levelName": "level-1",
+    "submissionData": null,
+    "status": "COMPLETED",
+    "result": "REJECTED",
+    "resultMessage": "name does not match",
+    "retryable": false,
+    "createdAt": "2025-03-26T22:50:14.201695Z",18.07.25, 15:08 PIX2STABLE <> OnChain Transfer | Avenia API
+https://integration-guide.avenia.io/docs/Usecases/pix2Stable&onChainTransfer 12/41
+--- Page 13 ---
+About Webhooks
+Before we begin the Operations section, weʼll share a guide for integrating webhooks—this will
+allow you to receive real-time updates for every stage of a Ticket event. A Ticket event refers
+to any update related to a created ticket (i.e., a money movement) within your Account; it may
+also involve a SubAccount. Events can have multiple statuses, such as TICKET-CREATED,
+DEPOSIT-PROCESSING, and so on.
+We recommend following these steps in order:
+Webhook Management
+Verifying Webhook Authenticity
+Webhooks Events
+Pix to BRLA
+We will now transfer balances to the main account via PIX, and BRLA Stable will be deposited.
+WARNING
+The quote is only valid for 15 seconds!
+HTTP GET Request
+Field Value Description Required
+inputCurrency BRLThe currency in which the
+mainAccount (in this case, Brazilianyes    "updatedAt": "2025-03-26T22:50:14.201695Z"
+  }
+}
+https://api.sandbox.avenia.io:10952/v2/account/quote/fixed-rate?
+inputCurrency=BRL&inputPaymentMethod=PIX&outputAmount=100&outputCurrenc
+y=BRLA&outputPaymentMethod=INTERNAL&inputThirdParty=false&outputThirdPa
+rty=false18.07.25, 15:08 PIX2STABLE <> OnChain Transfer | Avenia API
+https://integration-guide.avenia.io/docs/Usecases/pix2Stable&onChainTransfer 13/41
+--- Page 14 ---
+Field Value Description Required
+Reais).
+inputPaymentMethodPIXThe payment method in this case PIX
+method.yes
+outputAmount100The amount that the mainAccount
+receive (e.g., 98.58 = R$98.58).yes
+outputCurrency BRLAThe currency in which the
+mainAccount will receive funds. (in
+this case BRLA stable)yes
+outputPaymentMethodINTERNALThe method by which the
+mainAccount will receive funds (as an
+internal balance).yes
+inputThirdParty falseSince the information here is being
+deposit by de owner of accounts and
+subaccounts created by Avenia API, it
+will not be necessary to include this.yes
+outputThirdParty falseSince the information here is being
+outputed in accounts and
+subaccounts created by Avenia API, it
+will not be necessary to include this.yes
+cUrl Example
+JSON Responsecurl -X GET 
+"https://api.sandbox.avenia.io:10952/v2/account/quote/fixed-rate?
+inputCurrency=BRL&inputPaymentMethod=PIX&outputAmount=100&outputCurrenc
+y=BRLA&outputPaymentMethod=INTERNAL&inputThirdParty=false&outputThirdPa
+rty=false" \
+ -H "Authorization: Bearer 
+eyJhdXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"18.07.25, 15:08 PIX2STABLE <> OnChain Transfer | Avenia API
+https://integration-guide.avenia.io/docs/Usecases/pix2Stable&onChainTransfer 14/41
+--- Page 15 ---
+{
+  "quoteToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.quoteToken....",
+  "inputCurrency": "BRL",
+  "inputPaymentMethod": "PIX",
+  "inputAmount": "100.2",
+  "outputCurrency": "BRLA",
+  "outputPaymentMethod": "INTERNAL",
+  "outputAmount": "100",
+  "markupAmount": "0",
+  "markupCurrency": "",
+  "inputThirdParty": false,
+  "outputThirdParty": false,
+  "appliedFees": [
+    {
+      "type": "Markup Fee",
+      "description": "Total markup fees represented in the input 
+currency.",
+      "amount": "0",
+      "currency": "BRL"
+    },
+    {
+      "type": "In Fee",
+      "description": "Fees due to input currency and input payment 
+method.",
+      "amount": "0.2",
+      "currency": "BRL"
+    },
+    {
+      "type": "Conversion Fee",
+      "description": "Fees due to conversion from input currency to 
+output currency.",
+      "amount": "0",
+      "currency": "BRL"
+    },
+    {
+      "type": "Out Fee",
+      "description": "Fees due to output currency and output payment 
+method.",
+      "amount": "0",
+      "currency": "BRL"
+    },
+    {
+      "type": "Gas Fee",
+      "description": "Fees due to blockchain transaction costs.",
+      "amount": "0",
+      "currency": "BRL"18.07.25, 15:08 PIX2STABLE <> OnChain Transfer | Avenia API
+https://integration-guide.avenia.io/docs/Usecases/pix2Stable&onChainTransfer 15/41
+--- Page 16 ---
+Ticket - Closing the Order
+With the quote in hand, we will initiate the order closing process—referred to as "Ticket"—
+where the quote is finalized and the requested operation is executed, which in our case is a
+transfer to our main account.
+Field Value Descrip
+quoteToken eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.quoteToken....The
+quoteTok
+obtained
+from the
+quote
+endpoint
+ticketBlockchainOutputbeneficiaryWalletIdContains
+details
+regardin
+the ticke
+blockcha
+output.
+└ beneficiaryWalletId00000000-0000-0000-0000-000000000000 Here we
+the ID of
+your mai
+account 
+a zero id
+which
+makes
+Avenia A
+link this 
+to your
+main    }
+  ],
+  "basePrice": "1",
+  "pairName": "BRLBRLA"
+}18.07.25, 15:08 PIX2STABLE <> OnChain Transfer | Avenia API
+https://integration-guide.avenia.io/docs/Usecases/pix2Stable&onChainTransfer 16/41
+--- Page 17 ---
+Field Value Descrip
+account,
+who mad
+the requ
+HTTP POST Request
+Sample JSON Body
+Remember that here we pass a zeroed uuid because we are linking your main account to this
+deposit (who will receive the funds)
+cUrl Example
+JSON Responsehttps://api.sandbox.avenia.io:10952/v2/account/tickets
+{
+  "quoteToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.quoteToken....",
+  "ticketBlockchainOutput": {
+    "beneficiaryWalletId": "00000000-0000-0000-0000-000000000000"
+  }
+}
+curl -X POST "https://api.sandbox.avenia.io:10952/v2/account/tickets" \
+ -H "Authorization: Bearer 
+eyJhdXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" \
+ -H "Content-Type: application/json" \
+ -d '{
+     "quoteToken" : 
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.quoteToken....",
+     "ticketBlockchainOutput" : {
+     "beneficiaryWalletId" : "00000000-0000-0000-0000-000000000000"
+  }
+ }18.07.25, 15:08 PIX2STABLE <> OnChain Transfer | Avenia API
+https://integration-guide.avenia.io/docs/Usecases/pix2Stable&onChainTransfer 17/41
+--- Page 18 ---
+Here, we can see that the brCode is received, which represents the PIX payment code. The
+ticket will remain in a pending state until the PIX payment is completed.
+INFO
+If youʼve already registered a webhook for the TICKET event, you will start receiving
+webhook notifications from this point onward.
+INFO
+In the sandbox environment, the PIX payment is simulated within a few seconds.
+Verify status from Ticket
+INFO
+An alternative to continuously checking the ticket history to track its current stage is to
+use webhooks instead.
+Next, verify if the ticket status is PAID by checking the tickets by id endpoint.
+HTTP GET Request
+cUrl Example{
+  "brCode": "00020126810014br.gov.bcb.pix01365c2c61a1-134b-4c34-958f-
+ea3122ac717f0219Avenia Ticket 
+Payment5204000053039865406975.285802BR5917Avenia API Ltda6009Sao 
+Paulo622905253Uu0qFigaAnwGdmmDJp3R9Yuz6304DE64",
+  "expiration": "2025-04-14T13:58:47.609482542Z",
+  "id": "b73767f7-1343-4176-9298-fffc85ea71a4"
+}
+https://api.sandbox.avenia.io:10952/v2/account/tickets/YOUR-TICKET-
+UUID-HERE18.07.25, 15:08 PIX2STABLE <> OnChain Transfer | Avenia API
+https://integration-guide.avenia.io/docs/Usecases/pix2Stable&onChainTransfer 18/41
+--- Page 19 ---
+JSON Response
+INFO
+Note: The status can be in: UNPAID PROCESSING PAID FAILED PARTIAL-FAILEDcurl -X GET 
+"https://api.sandbox.avenia.io:10952/v2/account/tickets/b73767f7-1343-
+4176-9298-fffc85ea71a4" \
+ -H "Authorization: Bearer 
+eyJhdXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+{
+  "ticket": {
+    "id": "b73767f7-1343-4176-9298-fffc85ea71a4",
+    "workspaceId": "2ac803ad-faf7-489f-9c1a-c6a64072e699",
+    "userId": "05505dde-c2e4-47c5-bd5c-071b4c4bb6a4",
+    "status": "PAID",
+    "reason": "",
+    "failureReason": "",
+    "createdAt": "2025-04-22T14:24:02.038578Z",
+    "updatedAt": "2025-04-22T14:24:24.389526Z",
+    "expiresAt": "2025-04-23T14:24:02.036433Z",
+    "quote": {
+      "id": "763fb47b-6bc4-4abc-acb3-800139ca9772",
+      "ticketId": "0b695784-81de-4ba4-888a-947a5efe4f55",
+      "inputCurrency": "BRL",
+      "inputPaymentMethod": "PIX",
+      "inputAmount": "100.2",
+      "outputCurrency": "BRLA",
+      "outputPaymentMethod": "INTERNAL",
+      "outputAmount": "100",
+      "markupCurrency": "",
+      "markupAmount": "0",
+      "sendMethod": "",
+      "inputThirdParty": false,
+      "outputThirdParty": false,
+      "basePrice": "1",
+      "appliedFees": [
+        {
+          "type": "Markup Fee",
+          "amount": "0",
+          "currency": "BRL",
+          "rebatable": false,18.07.25, 15:08 PIX2STABLE <> OnChain Transfer | Avenia API
+https://integration-guide.avenia.io/docs/Usecases/pix2Stable&onChainTransfer 19/41
+--- Page 20 ---
+          "description": "Total markup fees represented in the input 
+currency."
+        },
+        {
+          "type": "In Fee",
+          "amount": "0.2",
+          "currency": "BRL",
+          "rebatable": true,
+          "description": "Fees due to input currency and input payment 
+method."
+        },
+        {
+          "type": "Conversion Fee",
+          "amount": "0",
+          "currency": "BRL",
+          "rebatable": true,
+          "description": "Fees due to conversion from input currency to 
+output currency."
+        },
+        {
+          "type": "Out Fee",
+          "amount": "0",
+          "currency": "BRL",
+          "rebatable": true,
+          "description": "Fees due to output currency and output 
+payment method."
+        },
+        {
+          "type": "Gas Fee",
+          "amount": "0",
+          "currency": "BRL",
+          "rebatable": false,
+          "description": "Fees due to blockchain transaction costs."
+        }
+      ],
+      "pairName": "BRLBRLA",
+      "outputBrCode": "",
+      "createdAt": "2025-04-22T14:24:01Z"
+    },
+    "rebate": {
+      "id": "ce260673-1590-4a0f-84c5-e2bf3bd97cf3",
+      "ticketId": "0b695784-81de-4ba4-888a-947a5efe4f55",
+      "amount": "0.1",
+      "currency": "BRLA",
+      "destinationWalletAddress": 
+"0xb6e8860883039b6db937639b94e9a10ff7971bb6"
+    },18.07.25, 15:08 PIX2STABLE <> OnChain Transfer | Avenia API
+https://integration-guide.avenia.io/docs/Usecases/pix2Stable&onChainTransfer 20/41
+--- Page 21 ---
+Checking subAccount balance
+Here, weʼll retrieve all current balances for your or main account.
+HTTP Get Request
+Example Json Response    "brazilianFiatSenderInfo": {
+      "id": "36428ccf-3be4-471c-a243-2635eea3e142",
+      "ticketId": "0b695784-81de-4ba4-888a-947a5efe4f55",
+      "name": "Ada Capital Gestao de Recursos Ltda",
+      "taxId": "45981761000100",
+      "bankCode": "20018183",
+      "branchCode": "0001",
+      "accountNumber": "5703785980624896",
+      "accountType": "payment",
+      "endToEndId": "e20018183202504221424gkdf7gyqoru"
+    },
+    "blockchainReceiverInfo": {
+      "id": "2734ee95-62d5-4bd2-a909-7e9322f59404",
+      "ticketId": "0b695784-81de-4ba4-888a-947a5efe4f55",
+      "walletAddress": "0xe41A4a64564D19f98867a4b43E743a7D988c9d68",
+      "walletChain": "INTERNAL",
+      "walletMemo": "",
+      "txHash": 
+"0xf1b98a5a5b179f219d9bc4df68df44af335bd412ce3c5025fdf3d87fbe9d64fd"
+    },
+    "brlPixInputInfo": {
+      "id": "a5bfd2bb-784a-4989-a105-52da968de113",
+      "ticketId": "0b695784-81de-4ba4-888a-947a5efe4f55",
+      "referenceLabel": "xe1thXY2aBq2naewSPfn7Xhfr",
+      "additionalData": "Avenia Ticket Payment",
+      "brCode": "00020126810014br.gov.bcb.pix01365c2c61a1-134b-4c34-
+958f-ea3122ac717f0219Avenia Ticket 
+Payment5204000053039865406100.205802BR5917Avenia API Ltda6009Sao 
+Paulo62290525xe1thXY2aBq2naewSPfn7Xhfr63041FA5"
+    }
+  }
+}
+https://api.sandbox.avenia.io:10952/v2/account/balances18.07.25, 15:08 PIX2STABLE <> OnChain Transfer | Avenia API
+https://integration-guide.avenia.io/docs/Usecases/pix2Stable&onChainTransfer 21/41
+--- Page 22 ---
+Convert BRLA to USDC or USDT
+To decide where you want to transfer your BRLA to another stablecoin, simply set the
+outputCurrency to your chosen one—USDT or USDC.
+WARNING
+The quote is only valid for 15 seconds!
+HTTP GET Request
+Field Value Description Required
+inputCurrency BRLAThe currency in which the
+mainAccount will receive funds. (in
+this case BRLA stable)yes
+inputPaymentMethodINTERNALThe method by which the
+mainAccount will receive funds (as
+an internal balance).yes
+outputAmount100The amount that the mainAccount
+receive (e.g., 98.58 = R$98.58).yes
+outputCurrencyUSDTThe currency in which the
+mainAccount will receive funds. (in
+this case USDT stable)yes{
+  "balances": {
+    "BRLA": "165.00000",
+    "USDC": "0",
+    "USDT": "0",
+    "USDM": "0"
+  }
+}
+https://api.sandbox.avenia.io:10952/v2/account/quote/fixed-rate18.07.25, 15:08 PIX2STABLE <> OnChain Transfer | Avenia API
+https://integration-guide.avenia.io/docs/Usecases/pix2Stable&onChainTransfer 22/41
+--- Page 23 ---
+Field Value Description Required
+outputPaymentMethodINTERNALThe method by which the
+mainAccount will receive funds (as
+an internal balance).yes
+inputThirdParty falseSince the mainAccountʼs funds are
+sourced from the own mainAccount,
+this field is not needed.yes
+outputThirdParty falseFor payments to a mainAccount, this
+should remain false (change to true if
+paying a third party).yes
+blockchainSendMethodPERMITDefines the blockchain transaction
+type. I this case "PERMIT"yes
+cUrl Example
+JSON Responsecurl -X GET 
+"https://api.sandbox.avenia.io:10952/v2/account/quote/fixed-rate?
+inputCurrency=BRLA&inputPaymentMethod=INTERNAL&outputAmount=100&outputC
+urrency=USDT&outputPaymentMethod=INTERNAL&inputThirdParty=false&outputT
+hirdParty=false&blockchainSendMethod=PERMIT" \
+ -H "Authorization: Bearer 
+eyJhdXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+{
+  "quoteToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.quoteToken....",
+  "inputCurrency": "BRLA",
+  "inputPaymentMethod": "INTERNAL",
+  "inputAmount": "582.446313",
+  "outputCurrency": "USDT",
+  "outputPaymentMethod": "INTERNAL",
+  "outputAmount": "100",
+  "markupAmount": "0",
+  "markupCurrency": "",
+  "blockchainSendMethod": "PERMIT",18.07.25, 15:08 PIX2STABLE <> OnChain Transfer | Avenia API
+https://integration-guide.avenia.io/docs/Usecases/pix2Stable&onChainTransfer 23/41
+--- Page 24 ---
+Ticket - Closing the Order  "inputThirdParty": false,
+  "outputThirdParty": false,
+  "appliedFees": [
+    {
+      "type": "Markup Fee",
+      "description": "Total markup fees represented in the input 
+currency.",
+      "amount": "0",
+      "currency": "BRLA"
+    },
+    {
+      "type": "In Fee",
+      "description": "Fees due to input currency and input payment 
+method.",
+      "amount": "0",
+      "currency": "BRLA"
+    },
+    {
+      "type": "Conversion Fee",
+      "description": "Fees due to conversion from input currency to 
+output currency.",
+      "amount": "3.494677",
+      "currency": "BRLA"
+    },
+    {
+      "type": "Out Fee",
+      "description": "Fees due to output currency and output payment 
+method.",
+      "amount": "0",
+      "currency": "BRLA"
+    },
+    {
+      "type": "Gas Fee",
+      "description": "Fees due to blockchain transaction costs.",
+      "amount": "0",
+      "currency": "BRLA"
+    }
+  ],
+  "basePrice": "5.7895",
+  "pairName": "USDTBRLA"
+}18.07.25, 15:08 PIX2STABLE <> OnChain Transfer | Avenia API
+https://integration-guide.avenia.io/docs/Usecases/pix2Stable&onChainTransfer 24/41
+--- Page 25 ---
+With the quote in hand, we will initiate the order closing process—referred to as "Ticket"—
+where the quote is finalized and the requested operation is executed, which in our case is a
+transfer to our main account.
+Field Value Descrip
+quoteToken eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.quoteToken....The
+quoteTok
+obtained
+from the
+quote
+endpoint
+ticketBlockchainOutputbeneficiaryWalletIdContains
+details
+regardin
+the ticke
+blockcha
+output.
+└ beneficiaryWalletId00000000-0000-0000-0000-000000000000Here we
+the ID of
+your mai
+account 
+a zero id
+which
+makes
+Avenia A
+link this 
+to your
+main
+account,
+who mad
+the requ
+HTTP POST Request
+https://api.sandbox.avenia.io:10952/v2/account/tickets18.07.25, 15:08 PIX2STABLE <> OnChain Transfer | Avenia API
+https://integration-guide.avenia.io/docs/Usecases/pix2Stable&onChainTransfer 25/41
+--- Page 26 ---
+Sample JSON Body
+Remember that here we pass a zeroed uuid because we are linking your main account to this
+deposit (who will receive the funds)
+cUrl Example
+JSON Response
+INFO
+If youʼve already registered a webhook for the TICKET event, you will start receiving
+webhook notifications from this point onward.
+Verify status from Ticket{
+  "quoteToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.quoteToken....",
+  "ticketBlockchainOutput": {
+    "beneficiaryWalletId": "00000000-0000-0000-0000-000000000000"
+  }
+}
+curl -X POST "https://api.sandbox.avenia.io:10952/v2/account/tickets" \
+ -H "Authorization: Bearer 
+eyJhdXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" \
+ -H "Content-Type: application/json" \
+ -d '{
+     "quoteToken" : 
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.quoteToken....",
+     "ticketBlockchainOutput" : {
+     "beneficiaryWalletId" : "00000000-0000-0000-0000-000000000000"
+  }
+ }
+{
+  "id": "b73767f7-1343-4176-9298-fffc85ea71a4"
+}18.07.25, 15:08 PIX2STABLE <> OnChain Transfer | Avenia API
+https://integration-guide.avenia.io/docs/Usecases/pix2Stable&onChainTransfer 26/41
+--- Page 27 ---
+INFO
+An alternative to continuously checking the ticket history to track its current stage is to
+use webhooks instead.
+Next, verify if the ticket status is PAID by checking the tickets by id endpoint.
+HTTP GET Request
+cUrl Example
+JSON Response
+INFO
+Note: The status can be in: UNPAID PROCESSING PAID FAILED PARTIAL-FAILEDhttps://api.sandbox.avenia.io:10952/v2/account/tickets/YOUR-TICKET-
+UUID-HERE
+curl -X GET 
+"https://api.sandbox.avenia.io:10952/v2/account/tickets/b73767f7-1343-
+4176-9298-fffc85ea71a4" \
+ -H "Authorization: Bearer 
+eyJhdXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+{
+  "ticket": {
+    "id": "b993375e-c819-4a63-85a5-2df6e90dd976",
+    "workspaceId": "fbe2f6a3-6604-4b12-aae5-9f2994aaa3c1",
+    "userId": "94fdb114-189f-46d2-bce8-6ee6ba461d18",
+    "status": "PAID",
+    "reason": "",
+    "failureReason": "",
+    "createdAt": "2025-04-22T14:52:07.171269Z",
+    "updatedAt": "2025-04-22T14:52:17.173258Z",
+    "expiresAt": "2025-04-22T14:57:07.169645Z",
+    "quote": {
+      "id": "7bd064bc-51de-4afa-b2dc-9fb33f6930b0",
+      "ticketId": "b993375e-c819-4a63-85a5-2df6e90dd976",
+18.07.25, 15:08 PIX2STABLE <> OnChain Transfer | Avenia API
+https://integration-guide.avenia.io/docs/Usecases/pix2Stable&onChainTransfer 27/41
+--- Page 28 ---
+      "inputCurrency": "BRLA",
+      "inputPaymentMethod": "INTERNAL",
+      "inputAmount": "582.847867",
+      "outputCurrency": "USDT",
+      "outputPaymentMethod": "INTERNAL",
+      "outputAmount": "100",
+      "markupCurrency": "",
+      "markupAmount": "0",
+      "sendMethod": "PERMIT",
+      "inputThirdParty": false,
+      "outputThirdParty": false,
+      "basePrice": "5.793499",
+      "appliedFees": [
+        {
+          "type": "Markup Fee",
+          "amount": "0",
+          "currency": "BRLA",
+          "rebatable": false,
+          "description": "Total markup fees represented in the input 
+currency."
+        },
+        {
+          "type": "In Fee",
+          "amount": "0",
+          "currency": "BRLA",
+          "rebatable": true,
+          "description": "Fees due to input currency and input payment 
+method."
+        },
+        {
+          "type": "Conversion Fee",
+          "amount": "3.497087",
+          "currency": "BRLA",
+          "rebatable": true,
+          "description": "Fees due to conversion from input currency to 
+output currency."
+        },
+        {
+          "type": "Out Fee",
+          "amount": "0",
+          "currency": "BRLA",
+          "rebatable": true,
+          "description": "Fees due to output currency and output 
+payment method."
+        },
+        {
+          "type": "Gas Fee",18.07.25, 15:08 PIX2STABLE <> OnChain Transfer | Avenia API
+https://integration-guide.avenia.io/docs/Usecases/pix2Stable&onChainTransfer 28/41
+--- Page 29 ---
+Transfer Tokens to Subaccounts
+To send funds to your SubAccount, the process is very simple—when creating the ticket, just
+provide your SubAccount ID as the recipient of the tokens.          "amount": "0",
+          "currency": "BRLA",
+          "rebatable": false,
+          "description": "Fees due to blockchain transaction costs."
+        }
+      ],
+      "pairName": "USDTBRLA",
+      "outputBrCode": "",
+      "createdAt": "2025-04-22T14:52:06Z"
+    },
+    "blockchainSenderInfo": {
+      "id": "31cea8c0-f998-41ed-ba51-4ed3412e20c0",
+      "ticketId": "b993375e-c819-4a63-85a5-2df6e90dd976",
+      "walletAddress": "0xe6B0847cE60Dd81C9DC55a8CC69F37343bFE5eF4",
+      "txHash": 
+"0x84435e1777ef3af19609447f79511918a0195c43c728613e9c7883357d3868a7"
+    },
+    "blockchainReceiverInfo": {
+      "id": "8fe21974-ebee-4e7c-9058-abc39b1881a9",
+      "ticketId": "b993375e-c819-4a63-85a5-2df6e90dd976",
+      "walletAddress": "0xe6B0847cE60Dd81C9DC55a8CC69F37343bFE5eF4",
+      "walletChain": "INTERNAL",
+      "walletMemo": "",
+      "txHash": 
+"0x84435e1777ef3af19609447f79511918a0195c43c728613e9c7883357d3868a7"
+    },
+    "blockchainInputInfo": {
+      "id": "7ae3719a-8267-4a54-a8f1-659a6e62f3ea",
+      "ticketId": "b993375e-c819-4a63-85a5-2df6e90dd976",
+      "r": "",
+      "s": "",
+      "v": 0,
+      "nonce": 0,
+      "deadline": 0,
+      "personalSignature": "",
+      "personalSignatureDeadline": 0
+    }
+  }
+}18.07.25, 15:08 PIX2STABLE <> OnChain Transfer | Avenia API
+https://integration-guide.avenia.io/docs/Usecases/pix2Stable&onChainTransfer 29/41
+--- Page 30 ---
+WARNING
+The quote is only valid for 15 seconds!
+HTTP GET Request
+Field Value Description Required
+inputCurrency USDTThe currency in which the
+mainAccount will receive funds. (in
+this case USDT stable)yes
+inputPaymentMethodINTERNALThe method by which the
+mainAccount will receive funds (as
+an internal balance).yes
+outputAmount100The amount that the mainAccount
+receive (e.g., 98.58 = R$98.58).yes
+outputCurrencyUSDTThe currency in which the
+mainAccount will receive funds. (in
+this case USDT stable)yes
+outputPaymentMethodINTERNALThe method by which the
+mainAccount will receive funds (as
+an internal balance).yes
+inputThirdParty falseSince the mainAccountʼs funds are
+sourced from the own mainAccount,
+this field is not needed.yes
+outputThirdParty falseFor payments to a mainAccount, this
+should remain false (change to true if
+paying a third party).yeshttps://api.sandbox.avenia.io:10952/v2/account/quote/fixed-rate18.07.25, 15:08 PIX2STABLE <> OnChain Transfer | Avenia API
+https://integration-guide.avenia.io/docs/Usecases/pix2Stable&onChainTransfer 30/41
+--- Page 31 ---
+Field Value Description Required
+blockchainSendMethodPERMITDefines the blockchain transaction
+type. I this case "PERMIT"yes
+cUrl Example
+JSON Responsecurl -X GET 
+"https://api.sandbox.avenia.io:10952/v2/account/quote/fixed-rate?
+inputCurrency=USDT&inputPaymentMethod=INTERNAL&outputAmount=100&outputC
+urrency=USDT&outputPaymentMethod=INTERNAL&inputThirdParty=false&outputT
+hirdParty=false&blockchainSendMethod=PERMIT" \
+ -H "Authorization: Bearer 
+eyJhdXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+{
+  "quoteToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.quoteToken....",
+  "inputCurrency": "USDT",
+  "inputPaymentMethod": "INTERNAL",
+  "inputAmount": "100",
+  "outputCurrency": "USDT",
+  "outputPaymentMethod": "INTERNAL",
+  "outputAmount": "100",
+  "markupAmount": "0",
+  "markupCurrency": "",
+  "blockchainSendMethod": "PERMIT",
+  "inputThirdParty": false,
+  "outputThirdParty": false,
+  "appliedFees": [
+    {
+      "type": "Markup Fee",
+      "description": "Total markup fees represented in the input 
+currency.",
+      "amount": "0",
+      "currency": "USDT"
+    },
+    {
+      "type": "In Fee",
+      "description": "Fees due to input currency and input payment 
+method.",18.07.25, 15:08 PIX2STABLE <> OnChain Transfer | Avenia API
+https://integration-guide.avenia.io/docs/Usecases/pix2Stable&onChainTransfer 31/41
+--- Page 32 ---
+Ticket - Closing the Order
+With the quote in hand, we will initiate the order closing process—referred to as "Ticket"—
+where the quote is finalized and the requested operation is executed, which in our case is a
+transfer to our sub account.
+Field Value Descrip
+quoteToken eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.quoteToken....The
+quoteTok
+obtained
+from the
+quote
+endpoint      "amount": "0",
+      "currency": "USDT"
+    },
+    {
+      "type": "Conversion Fee",
+      "description": "Fees due to conversion from input currency to 
+output currency.",
+      "amount": "0",
+      "currency": "USDT"
+    },
+    {
+      "type": "Out Fee",
+      "description": "Fees due to output currency and output payment 
+method.",
+      "amount": "0",
+      "currency": "USDT"
+    },
+    {
+      "type": "Gas Fee",
+      "description": "Fees due to blockchain transaction costs.",
+      "amount": "0",
+      "currency": "USDT"
+    }
+  ],
+  "basePrice": "1",
+  "pairName": "USDTUSDT"
+}18.07.25, 15:08 PIX2STABLE <> OnChain Transfer | Avenia API
+https://integration-guide.avenia.io/docs/Usecases/pix2Stable&onChainTransfer 32/41
+--- Page 33 ---
+Field Value Descrip
+ticketBlockchainOutputbeneficiaryWalletIdContains
+details
+regardin
+the ticke
+blockcha
+output.
+└ beneficiaryWalletId1ee0a663-922b-4389-9f84-074ccff7085dHere we
+the ID of
+your sub
+account
+HTTP POST Request
+Sample JSON Body
+Remember to provide the ID of the SubAccount you want to transfer the balances to.
+JSON Response
+INFO
+If youʼve already registered a webhook for the TICKET event, you will start receiving
+webhook notifications from this point onward.https://api.sandbox.avenia.io:10952/v2/account/tickets
+{
+  "quoteToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.quoteToken....",
+  "ticketBlockchainOutput": {
+    "beneficiaryWalletId": "1ee0a663-922b-4389-9f84-074ccff7085d"
+  }
+}18.07.25, 15:08 PIX2STABLE <> OnChain Transfer | Avenia API
+https://integration-guide.avenia.io/docs/Usecases/pix2Stable&onChainTransfer 33/41
+--- Page 34 ---
+Checking subAccount balance
+Here, weʼll retrieve all current balances for your or subaccount.
+INFO
+Keep in mind that the operation is still being performed by the subaccount, so itʼs also
+necessary to include the subAccountId parameter here.
+HTTP Get Request
+Example Json Response
+Send tokens from Subaccounts to
+External Wallets
+Before starting the process of sending tokens to external wallets, we first need to identify
+those external wallets. Thatʼs where the topic of Beneficiary Wallets
+Create Beneficiary Wallet{
+  "id": "b73767f7-1343-4176-9298-fffc85ea71a4"
+}
+https://api.sandbox.avenia.io:10952/v2/account/balances?
+subAccountId=YOUR-SUBACCOUNT-ID-HERE
+{
+  "balances": {
+    "BRLA": "0",
+    "USDC": "0",
+    "USDT": "100",
+    "USDM": "0"
+  }
+}18.07.25, 15:08 PIX2STABLE <> OnChain Transfer | Avenia API
+https://integration-guide.avenia.io/docs/Usecases/pix2Stable&onChainTransfer 34/41
+--- Page 35 ---
+Registering a new beneficiary wallet is straightforward. Letʼs look at the required fields:
+Fields
+FieldTypeRequired Description
+alias stringYes A custom name for the wallet to help identify it.
+descriptionstringNo A brief description of the wallet.
+walletAddressstringYesThe blockchain wallet address.
+walletChainstringYesThe blockchain network of the wallet (e.g.,
+POLYGON, CELO, ETHEREUM, GNOSIS,
+MOONBEAM and TRON).
+walletMemostringNo Memo for the wallet.
+INFO
+To perform this operation for a sub-account, pass the subAccountId field as a parameter
+to this endpoint.
+HTTP Post Request
+Sample JSON Bodyhttps://api.sandbox.avenia.io:10952/v2/account/beneficiaries/wallets?
+subAccountId=SUB-ACCOUNT-ID-HERE
+{
+  "alias": "ExampleAlias",
+  "description": "Example description",
+  "walletAddress": "0xXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+  "walletChain": "POLYGON",
+  "walletMemo": "memooo"
+}18.07.25, 15:08 PIX2STABLE <> OnChain Transfer | Avenia API
+https://integration-guide.avenia.io/docs/Usecases/pix2Stable&onChainTransfer 35/41
+--- Page 36 ---
+cUrl Example
+JSON Response
+Sending Tokens to a Beneficiary Wallet
+Now that everything is ready and the beneficiary wallet has been registered, we just need to
+generate the quote.
+INFO
+Remember, the outputPaymentMethod must match the chain of the registered wallet.
+WARNING
+The quote is only valid for 15 seconds!
+HTTP GET Requestcurl -X POST 
+"https://api.sandbox.avenia.io:10952/v2/account/beneficiaries/wallets?
+subAccountId=SUB-ACCOUNT-ID-HERE" \
+-H "Content-Type: application/json" \
+-H "Authorization: Bearer 
+eyJhdXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" \
+-d '{
+  "alias": "ExampleAlias",
+  "description": "Example description",
+  "walletAddress": "0xXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+  "walletChain": "POLYGON",
+  "walletMemo": "memooo"
+}'
+{
+  "id": "76971925-a1ca-423f-badf-0b3f2b03c51c"
+}
+https://api.sandbox.avenia.io:10952/v2/account/quote/fixed-rate?18.07.25, 15:08 PIX2STABLE <> OnChain Transfer | Avenia API
+https://integration-guide.avenia.io/docs/Usecases/pix2Stable&onChainTransfer 36/41
+--- Page 37 ---
+Field Value Description Required
+inputCurrency USDTThe currency in which the
+mainAccount will receive funds. (in
+this case USDT stable)yes
+inputPaymentMethodINTERNALThe method by which the
+mainAccount will receive funds (as
+an internal balance).yes
+outputAmount50The amount that the mainAccount
+receive (e.g., 98.58 = R$98.58).yes
+outputCurrencyUSDTThe currency in which the
+mainAccount will receive funds. (in
+this case USDT stable)yes
+outputPaymentMethodPOLYGONThe method by which the external
+wallet will receive funds (must be the
+same as the beneficiary wallet
+registered chain).yes
+inputThirdParty falseSince the mainAccountʼs funds are
+sourced from the own mainAccount,
+this field is not needed.yes
+outputThirdParty falseFor payments to a mainAccount, this
+should remain false (change to true if
+paying a third party).yes
+blockchainSendMethodPERMITDefines the blockchain transaction
+type. I this case "PERMIT"yes
+INFOsubAccountId=SUB-ACCOUNT-ID-HERE18.07.25, 15:08 PIX2STABLE <> OnChain Transfer | Avenia API
+https://integration-guide.avenia.io/docs/Usecases/pix2Stable&onChainTransfer 37/41
+--- Page 38 ---
+To perform this operation for a subAccount, pass the subAccountId field as a parameter
+to this endpoint.
+cUrl Example
+JSON Responsecurl -X GET 
+"https://api.sandbox.avenia.io:10952/v2/account/quote/fixed-rate?
+inputCurrency=USDT&inputPaymentMethod=INTERNAL&outputAmount=100&outputC
+urrency=USDT&outputPaymentMethod=POLYGON&inputThirdParty=false&outputTh
+irdParty=false&blockchainSendMethod=PERMIT&subAccountId=1ee0a663-922b-
+4389-9f84-074ccff7085d" \
+ -H "Authorization: Bearer 
+eyJhdXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+{
+  "quoteToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.quoteToken....",
+  "inputCurrency": "USDT",
+  "inputPaymentMethod": "INTERNAL",
+  "inputAmount": "100.050089",
+  "outputCurrency": "USDT",
+  "outputPaymentMethod": "POLYGON",
+  "outputAmount": "100",
+  "markupAmount": "0",
+  "markupCurrency": "",
+  "blockchainSendMethod": "PERMIT",
+  "inputThirdParty": false,
+  "outputThirdParty": false,
+  "appliedFees": [
+    {
+      "type": "Markup Fee",
+      "description": "Total markup fees represented in the input 
+currency.",
+      "amount": "0",
+      "currency": "USDT"
+    },
+    {
+      "type": "In Fee",
+      "description": "Fees due to input currency and input payment 
+method.",
+      "amount": "0",
+      "currency": "USDT"18.07.25, 15:08 PIX2STABLE <> OnChain Transfer | Avenia API
+https://integration-guide.avenia.io/docs/Usecases/pix2Stable&onChainTransfer 38/41
+--- Page 39 ---
+Ticket - Closing the Order
+With the quote in hand, we will initiate the order closing process—referred to as "Ticket"—
+where the quote is finalized and the requested operation is executed, which in our case is a
+transfer to our sub account.
+Field Value Descrip
+quoteToken eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.quoteToken....The
+quoteTok
+obtained
+from the
+quote
+endpoint
+ticketBlockchainOutputbeneficiaryWalletId Contains
+details    },
+    {
+      "type": "Conversion Fee",
+      "description": "Fees due to conversion from input currency to 
+output currency.",
+      "amount": "0",
+      "currency": "USDT"
+    },
+    {
+      "type": "Out Fee",
+      "description": "Fees due to output currency and output payment 
+method.",
+      "amount": "0.050025",
+      "currency": "USDT"
+    },
+    {
+      "type": "Gas Fee",
+      "description": "Fees due to blockchain transaction costs.",
+      "amount": "0.000063",
+      "currency": "USDT"
+    }
+  ],
+  "basePrice": "1",
+  "pairName": "USDTUSDT"
+}18.07.25, 15:08 PIX2STABLE <> OnChain Transfer | Avenia API
+https://integration-guide.avenia.io/docs/Usecases/pix2Stable&onChainTransfer 39/41
+--- Page 40 ---
+Field Value Descrip
+regardin
+the ticke
+blockcha
+output.
+└ beneficiaryWalletId1ee0a663-922b-4389-9f84-074ccff7085dHere we
+the ID of
+your
+beneficia
+wallet
+registred
+HTTP POST Request
+Sample JSON Body
+Remember to provide the ID of the SubAccount you want to transfer the balances to.
+JSON Response
+INFO
+If youʼve already registered a webhook for the TICKET event, you will start receiving
+webhook notifications from this point onward.https://api.sandbox.avenia.io:10952/v2/account/tickets
+{
+  "quoteToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.quoteToken....",
+  "ticketBlockchainOutput": {
+    "beneficiaryWalletId": "76971925-a1ca-423f-badf-0b3f2b03c51c"
+  }
+}18.07.25, 15:08 PIX2STABLE <> OnChain Transfer | Avenia API
+https://integration-guide.avenia.io/docs/Usecases/pix2Stable&onChainTransfer 40/41
+--- Page 41 ---
+{
+  "id": "b73767f7-1343-4176-9298-fffc85ea71a4"
+}18.07.25, 15:08 PIX2STABLE <> OnChain Transfer | Avenia API
+https://integration-guide.avenia.io/docs/Usecases/pix2Stable&onChainTransfer 41/41

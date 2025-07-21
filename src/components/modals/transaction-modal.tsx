@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Button } from "~/components/ui/button"
+import { Button } from "~/components/ui/Button"
 import { Input } from "~/components/ui/input"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "~/components/ui/card"
 import { motion } from "framer-motion"
@@ -12,7 +12,7 @@ interface TransactionModalProps {
   onNext: (amount: string) => void
 }
 
-export function TransactionModal({ type, onClose, onNext }: TransactionModalProps) {
+export function TransactionModal({ type, onClose: _onClose, onNext }: TransactionModalProps) {
   const [amount, setAmount] = useState("")
 
   const handleNext = () => {

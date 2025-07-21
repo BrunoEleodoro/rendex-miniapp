@@ -1,15 +1,100 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import Image from "next/image"
-import { Button } from "~/components/ui/button"
+import { useRouter } from "next/navigation"
+import { Button } from "~/components/ui/Button"
 import { ArrowRight } from "lucide-react"
 import { motion } from "framer-motion"
+import { useRealTimeUpdates } from "~/hooks/useRealTimeUpdates"
 
 interface ScreenProps {
-  onNext: () => void
+  onNext?: () => void
 }
 
-export function AnalysisScreen({ onNext }: ScreenProps) {
+interface User {
+  id: string;
+  email: string;
+  kycStatus: 'not_started' | 'in_progress' | 'completed' | 'rejected';
+}
+
+export function AnalysisScreen({ onNext }: ScreenProps = {}) {
+  const router = useRouter()
+  const [user, setUser] = useState<User | null>(null)
+  const [_isCheckingStatus, setIsCheckingStatus] = useState(true)
+  const [kycProgress, setKycProgress] = useState('Initializing verification...')
+
+  // Set up real-time updates for KYC status
+  const { isConnected } = useRealTimeUpdates({
+    userId: user?.id || '',
+    onKYCUpdate: (update) => {
+      console.log('[AnalysisScreen] Real-time KYC update received:', update);
+      
+      if (update.kycStatus && user) {
+        const updatedUser = { ...user, kycStatus: update.kycStatus as any };
+        setUser(updatedUser);
+        localStorage.setItem('rendex_user', JSON.stringify(updatedUser));
+        
+        // Update progress message
+        if (update.kycStatus === 'completed') {
+          setKycProgress('Identity verification completed successfully! 🎉');
+          // Proceed to ready screen after 2 seconds
+          setTimeout(() => {
+            if (onNext) {
+              onNext();
+            } else {
+              router.push("/ready");
+            }
+          }, 2000);
+        } else if (update.kycStatus === 'rejected') {
+          setKycProgress('Identity verification was not approved. Please contact support.');
+        }
+      }
+      
+      if (update.message) {
+        setKycProgress(update.message);
+      }
+    },
+    autoReconnect: true
+  });
+
+  // Check KYC status when component mounts
+  useEffect(() => {
+    console.log('[AnalysisScreen] Checking user KYC status');
+    const savedUser = localStorage.getItem('rendex_user');
+    
+    if (savedUser) {
+      try {
+        const userData = JSON.parse(savedUser);
+        console.log('[AnalysisScreen] Found user with KYC status:', userData.kycStatus);
+        setUser(userData);
+        
+        // KYC paused - redirect directly to dashboard
+        setKycProgress('KYC verification paused. Redirecting to dashboard...');
+        setTimeout(() => {
+          router.push("/dashboard");
+        }, 1500);
+        
+        setIsCheckingStatus(false);
+      } catch (error) {
+        console.error('[AnalysisScreen] Failed to parse saved user:', error);
+        localStorage.removeItem('rendex_user');
+        setIsCheckingStatus(false);
+        router.push("/welcome");
+      }
+    } else {
+      console.log('[AnalysisScreen] No user found, redirecting to welcome');
+      router.push("/welcome");
+    }
+  }, [router, onNext]);
+  
+  const handleNext = () => {
+    if (onNext) {
+      onNext()
+    } else {
+      router.push("/ready")
+    }
+  }
   return (
     <motion.div 
       className="min-h-screen w-full bg-light-blue flex flex-col justify-between items-center text-center p-8 bg-[url('/images/cloud-bg.png')] bg-cover bg-center"
@@ -45,7 +130,10 @@ export function AnalysisScreen({ onNext }: ScreenProps) {
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.4, duration: 0.6 }}
         >
-          Account in Analysis
+          {user?.kycStatus === 'completed' ? 'Verification Complete!' : 
+           user?.kycStatus === 'in_progress' ? 'Identity Verification' : 
+           user?.kycStatus === 'rejected' ? 'Verification Failed' : 
+           'Checking Status'}
         </motion.h1>
         <motion.p 
           className="text-gray-600 max-w-xs"
@@ -53,8 +141,21 @@ export function AnalysisScreen({ onNext }: ScreenProps) {
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.6, duration: 0.6 }}
         >
-          Please wait a moment while we approve your account. With us, the sky's the limit for your money.
+          {kycProgress}
         </motion.p>
+
+        {/* Real-time connection indicator */}
+        {user?.kycStatus === 'in_progress' && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1, duration: 0.6 }}
+            className="mt-4 flex items-center gap-2 text-sm text-gray-500"
+          >
+            <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
+            {isConnected ? 'Real-time updates connected' : 'Connecting...'}
+          </motion.div>
+        )}
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
@@ -76,7 +177,7 @@ export function AnalysisScreen({ onNext }: ScreenProps) {
         className="w-full"
       >
         <Button
-          onClick={onNext}
+          onClick={handleNext}
           className="w-full bg-primary-blue hover:bg-primary-blue/90 text-white rounded-xl h-14 text-lg"
         >
           Get Started

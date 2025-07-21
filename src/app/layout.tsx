@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 
 import '~/app/globals.css';
 import { Providers } from '~/app/providers';
+import { AppNavigation } from '~/components/navigation/AppNavigation';
 import { APP_NAME, APP_DESCRIPTION } from '~/lib/constants';
 
 export const metadata: Metadata = {
@@ -33,7 +34,10 @@ export default async function RootLayout({
     <html lang="en">
       <body>
         <Providers session={session} shouldUseSession={shouldUseSession}>
-          {children}
+          <div className="min-h-screen relative">
+            {children}
+            <AppNavigation />
+          </div>
         </Providers>
       </body>
     </html>

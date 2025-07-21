@@ -1,6 +1,6 @@
 "use client"
 
-import { Button } from "~/components/ui/button"
+import { Button } from "~/components/ui/Button"
 import { Card, CardContent, CardFooter } from "~/components/ui/card"
 import { CheckCircle2 } from "lucide-react"
 import { motion } from "framer-motion"

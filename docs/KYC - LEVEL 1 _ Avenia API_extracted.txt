@@ -1,0 +1,194 @@
+
+--- Page 1 ---
+KYCKYC - LEVEL 1
+KYC (Know Your Customer)
+Guide
+KYC is a process to verify user identity, ensuring compliance with regulations and preventing
+fraud or illegal activities. It involves validating personal information and documents.
+INFO
+Remember that to perform KYC for a Subaccount, simply pass the subAccountId field
+as a request parameter.
+KYC Level 1 - Web SDK
+To complete KYC Level 1, you will receive a link that redirects to a verification form. Follow the
+instructions on the site to submit your information. The completion deadline is 24 hours.
+HTTP Post Request:
+cURL Example:
+JSON Response:
+https://api.sandbox.avenia.io:10952/v2/kyc/level-1/web-sdk
+curl -X POST "https://api.sandbox.avenia.io:10952/v2/kyc/level-1/web-
+sdk" \
+     -H "Content-Type: application/json" \
+     -H "Authorization: Bearer 
+eyJhdXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"20.07.25, 17:10 KYC - LEVEL 1 | Avenia API
+https://integration-guide.avenia.io/docs/KYC/kycLevel1 1/7
+--- Page 2 ---
+KYC Level 1 - API
+Another way to perform KYC Level 1 for your user is through the API.
+HTTP Post Request:
+INFO
+Remember that to perform this endpoint for a Subaccount, simply pass the
+subAccountId field as a request parameter.
+Fields
+FieldTypeRequired Description
+fullName stringYesThe complete name of the individual.
+dateOfBirth stringYesThe date of birth of the individual (Format:
+YYYY-MM-DD).
+countryOfDocumentstringYesThe country issuing the document.
+documentType stringYesThe type of document (must be one of ID,
+Passport, Driver's License).
+documentNumberstringYesThe number of the document.
+countryOfTaxId stringYesThe country where the tax identification
+number was issued.{
+  "url": "https://in.sumsub.com/websdk/p/sbx_dC000HhJ0Sel0000"
+}
+https://api.sandbox.avenia.io:10952/v2/kyc/level-1/api20.07.25, 17:10 KYC - LEVEL 1 | Avenia API
+https://integration-guide.avenia.io/docs/KYC/kycLevel1 2/7
+--- Page 3 ---
+FieldTypeRequired Description
+taxIdNumber stringYesThe tax identification number of the
+individual.
+email stringNoThe email address of the individual.
+phone stringNoThe phone number of the individual.
+country stringYesThe country of residence.
+state stringYesThe state/province of residence.
+city stringYesThe city of residence.
+zipCode stringYesThe postal code of the residence.
+streetAddress stringYesThe street address of the residence.
+INFO
+All countries and states follow the ISO Alpha-3 standard (Example: USA-CA)
+Sample JSON Body:
+{
+  "fullName": "Jane Doe",
+  "dateOfBirth": "1999-08-16",
+  "countryOfDocument": "BRA",
+  "documentType": "Passport",
+  "documentNumber": "UJ252482",
+  "countryOfTaxId": "BRA",
+  "taxIdNumber": "75764220173",
+  "country": "BRA",
+  "state": "SP",
+  "city": "SP",
+  "zipCode": "12243010",
+  "streetAddress": "Rua Madre Paula"
+}20.07.25, 17:10 KYC - LEVEL 1 | Avenia API
+https://integration-guide.avenia.io/docs/KYC/kycLevel1 3/7
+--- Page 4 ---
+cURL Example:
+JSON Response:
+List All KYC Attempts
+Check all KYC attempt histories associated with your account or subaccount.
+INFO
+To filter by specific subaccount, add the subAccountId parameter to the request.
+HTTP Get Request:
+cURL Example:
+JSON Response Example:curl -X POST "https://api.sandbox.avenia.io:10952/v2/kyc/level-1/api" \
+     -H "Authorization: Bearer 
+eyJhdXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" \
+     -H "Content-Type: application/json" \
+     -d '{ ... }'
+{
+  "id": "1ee11163-9tjb-4389-9f84-074ccff7085d"
+}
+https://api.sandbox.avenia.io:10952/v2/kyc/attempts
+curl -X GET "https://api.sandbox.avenia.io:10952/v2/kyc/attempts" \
+     -H "Authorization: Bearer 
+eyJhdXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"20.07.25, 17:10 KYC - LEVEL 1 | Avenia API
+https://integration-guide.avenia.io/docs/KYC/kycLevel1 4/7
+--- Page 5 ---
+Get KYC Attempt
+Ensure the KYC has been successfully validated.
+HTTP Get Request:
+INFO
+For subaccount validation, include subAccountId in the request.
+cURL Example:
+JSON Response:{
+  "attempts": [
+    {
+      "id": "e51359cd-04b0-4bbc-bf7d-0ee515112d74",
+      "levelName": "level-1",
+      "submissionData": null,
+      "status": "COMPLETED",
+      "result": "APPROVED",
+      "resultMessage": "",
+      "retryable": false,
+      "createdAt": "2025-03-25T07:39:40.54713Z",
+      "updatedAt": "2025-03-25T07:39:40.54713Z"
+    }
+  ],
+  "cursor": "MTYtMTc0MjQ4MjA5NzAxMQ=="
+}
+https://api.sandbox.avenia.io:10952/v2/kyc/attempts/{kyc-attempt-id}
+curl -X GET "https://api.sandbox.avenia.io:10952/v2/kyc/attempts/{kyc-
+attempt-id}" \
+     -H "Authorization: Bearer 
+eyJhdXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"20.07.25, 17:10 KYC - LEVEL 1 | Avenia API
+https://integration-guide.avenia.io/docs/KYC/kycLevel1 5/7
+--- Page 6 ---
+KYC - Track KYC Validation
+This endpoint allows you to track the progress and outcome of a specific KYC attempt by ID.
+The response includes the current status (PENDING, COMPLETED), the final result
+(APPROVED, REJECTED), and additional context such as retry eligibility and rejection reasons.
+HTTP GET Request
+cUrl Example
+JSON Response - COMPLETED example{
+  "attempt": {
+    "id": "e51359cd-04b0-4bbc-bf7d-0ee515112d74",
+    "levelName": "level-1",
+    "submissionData": null,
+    "status": "COMPLETED",
+    "result": "APPROVED",
+    "resultMessage": "",
+    "retryable": false,
+    "createdAt": "2025-03-25T07:39:40.54713Z",
+    "updatedAt": "2025-03-25T07:39:40.54713Z"
+  }
+}
+https://api.sandbox.avenia.io:10952/v2/kyc/attempts/**YOUR-KYC-ID-
+HERE**
+curl -X GET "https://api.sandbox.avenia.io:10952/v2/kyc/attempts/{kyc-
+attempt-id}" \
+ -H "Authorization: Bearer 
+eyJhdXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+{
+  "attempt": {
+    "id": "e51359cd-04b0-4bbc-bf7d-0ee515112d74",
+    "levelName": "level-1",20.07.25, 17:10 KYC - LEVEL 1 | Avenia API
+https://integration-guide.avenia.io/docs/KYC/kycLevel1 6/7
+--- Page 7 ---
+JSON Response - PENDING example
+JSON Response - REJECT example    "submissionData": null,
+    "status": "COMPLETED",
+    "result": "APPROVED",
+    "resultMessage": "",
+    "retryable": false,
+    "createdAt": "2025-03-25T07:39:40.54713Z",
+    "updatedAt": "2025-03-25T07:39:40.54713Z"
+  }
+}
+{
+  "attempt": {
+    "id": "b83802a1-afe9-46ac-96d6-ade6c5961bd3",
+    "levelName": "level-1",
+    "submissionData": null,
+    "status": "PENDING",
+    "result": "",
+    "resultMessage": "",
+    "retryable": false,
+    "createdAt": "2025-03-26T22:50:14.201695Z",
+    "updatedAt": "2025-03-26T22:50:14.201695Z"
+  }
+}
+{
+  "attempt": {
+    "id": "5bafd6cd-ec40-4dd3-83e0-a5af117c304a",
+    "levelName": "level-1",
+    "submissionData": null,
+    "status": "COMPLETED",
+    "result": "REJECTED",
+    "resultMessage": "name does not match",
+    "retryable": false,
+    "createdAt": "2025-03-26T22:50:14.201695Z",
+    "updatedAt": "2025-03-26T22:50:14.201695Z"
+  }
+}20.07.25, 17:10 KYC - LEVEL 1 | Avenia API
+https://integration-guide.avenia.io/docs/KYC/kycLevel1 7/7

@@ -79,3 +79,48 @@ However, this does not fully replicate the npx install flow and may not catch al
 
 If you update environment variable handling, remember to replicate any changes in the `dev`, `build`, and `deploy` scripts as needed. The `build` and `deploy` scripts may need further updates and are less critical for most development workflows.
 
+# Rendex MiniApp
+
+A Next.js application for Rendex PIX2STABLE integration with Avenia.
+
+## Environment Variables
+
+Create a `.env.local` file with the following variables:
+
+```bash
+# Avenia API Configuration (Required)
+AVENIA_API_KEY=your_avenia_api_key_here
+AVENIA_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----
+your_private_key_content_here
+-----END PRIVATE KEY-----"
+AVENIA_API_BASE_URL=https://api.sandbox.avenia.io:10952
+
+# MongoDB Configuration
+MONGODB_URI=mongodb://localhost:27017/rendex-miniapp
+
+# NextAuth Configuration
+NEXTAUTH_SECRET=your_nextauth_secret_here
+NEXTAUTH_URL=http://localhost:3000
+```
+
+## Avenia Authentication
+
+This application uses Avenia's API key authentication with cryptographic signatures. You need:
+
+1. **API Key**: Your registered API key from Avenia
+2. **Private Key**: The RSA private key (PEM format) used for signing requests
+
+The authentication generates these headers for each request:
+- `X-API-Key`: Your API key
+- `X-API-Timestamp`: Current timestamp in milliseconds
+- `X-API-Signature`: RSA-SHA256 signature of `timestamp + method + request_uri + body`
+
+## Getting Started
+
+```bash
+npm install
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) with your browser.
+

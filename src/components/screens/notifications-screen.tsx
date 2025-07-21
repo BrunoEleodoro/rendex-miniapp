@@ -1,14 +1,24 @@
 "use client"
 
-import { Button } from "~/components/ui/button"
+import { useRouter } from "next/navigation"
+import { Button } from "~/components/ui/Button"
 import { motion } from "framer-motion"
 import { Bell } from "lucide-react"
 
 interface ScreenProps {
-  onNext: () => void
+  onNext?: () => void
 }
 
-export function NotificationsScreen({ onNext }: ScreenProps) {
+export function NotificationsScreen({ onNext }: ScreenProps = {}) {
+  const router = useRouter()
+  
+  const handleNext = () => {
+    if (onNext) {
+      onNext()
+    } else {
+      router.push("/dashboard")
+    }
+  }
   return (
     <motion.div 
       className="min-h-screen w-full bg-light-blue flex flex-col justify-center items-center text-center p-8"
@@ -69,7 +79,7 @@ export function NotificationsScreen({ onNext }: ScreenProps) {
         >
           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
             <Button
-              onClick={onNext}
+              onClick={handleNext}
               className="w-full bg-primary-blue hover:bg-primary-blue/90 text-white rounded-xl h-14 text-lg"
             >
               Turn on notifications
@@ -77,7 +87,7 @@ export function NotificationsScreen({ onNext }: ScreenProps) {
           </motion.div>
           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
             <Button
-              onClick={onNext}
+              onClick={handleNext}
               variant="outline"
               className="w-full border-primary-blue text-primary-blue hover:bg-primary-blue/10 hover:text-primary-blue rounded-xl h-14 text-lg bg-transparent"
             >

@@ -4,7 +4,10 @@ import { useEffect } from "react";
 import { useMiniApp } from "@neynar/react";
 import { Header } from "~/components/ui/Header";
 import { Footer } from "~/components/ui/Footer";
-import { HomeTab, ActionsTab, ContextTab, WalletTab } from "~/components/ui/tabs";
+import { HomeTab } from "~/components/ui/tabs/HomeTab";
+import { ActionsTab } from "~/components/ui/tabs/ActionsTab";
+import { ContextTab } from "~/components/ui/tabs/ContextTab";
+import { WalletTab } from "~/components/ui/tabs/WalletTab";
 import { USE_WALLET } from "~/lib/constants";
 import { useNeynarUser } from "../hooks/useNeynarUser";
 

@@ -1,16 +1,87 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import Image from "next/image"
-import { Button } from "~/components/ui/button"
-import { User, Flame, RefreshCw } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { Button } from "~/components/ui/Button"
+import { User, Flame, RefreshCw, CreditCard } from "lucide-react"
 import { motion } from "framer-motion"
+import { BalanceCard } from "~/components/avenia/BalanceCard"
 
 interface DashboardProps {
-  onInvest: () => void
-  onWithdraw: () => void
+  onInvest?: () => void
+  onWithdraw?: () => void
 }
 
-export function DashboardScreen({ onInvest, onWithdraw }: DashboardProps) {
+interface User {
+  id: string;
+  email: string;
+  subaccountId?: string;
+  kycStatus: 'not_started' | 'in_progress' | 'completed' | 'rejected';
+}
+
+export function DashboardScreen({ onInvest, onWithdraw }: DashboardProps = {}) {
+  const router = useRouter()
+  const [user, setUser] = useState<User | null>(null)
+  
+  // Check user status
+  useEffect(() => {
+    console.log('[DashboardScreen] Checking user status');
+    const savedUser = localStorage.getItem('rendex_user');
+    
+    if (savedUser) {
+      try {
+        const userData = JSON.parse(savedUser);
+        console.log('[DashboardScreen] Found user:', {
+          id: userData.id,
+          email: userData.email,
+          kycStatus: userData.kycStatus
+        });
+        setUser(userData);
+      } catch (error) {
+        console.error('[DashboardScreen] Failed to parse saved user:', error);
+        localStorage.removeItem('rendex_user');
+      }
+    } else {
+      console.log('[DashboardScreen] No user found');
+    }
+  }, []);
+  
+  const handleInvest = () => {
+    if (onInvest) {
+      onInvest()
+    } else {
+      // KYC paused - allow investment for all users with wallet connected
+      if (!user) {
+        console.log('[DashboardScreen] No user found, redirecting to welcome to connect wallet');
+        router.push("/welcome")
+      } else {
+        // Open PIX payment modal directly (KYC bypassed)
+        console.log('[DashboardScreen] Opening PIX investment flow (KYC bypassed)');
+        router.push("/pix-invest")
+      }
+    }
+  }
+  
+  const handleWithdraw = () => {
+    if (onWithdraw) {
+      onWithdraw()
+    } else {
+      // KYC paused - allow withdrawal for all users with wallet connected
+      if (!user) {
+        console.log('[DashboardScreen] No user found, redirecting to welcome to connect wallet');
+        router.push("/welcome")
+      } else {
+        console.log('[DashboardScreen] Opening withdrawal flow (KYC bypassed)');
+        router.push("/withdraw")
+      }
+    }
+  }
+
+  const handleCompleteKYC = () => {
+    console.log('[DashboardScreen] Redirecting to complete KYC process');
+    router.push("/welcome")
+  }
   return (
     <motion.div 
       className="min-h-screen w-full flex flex-col"
@@ -62,13 +133,19 @@ export function DashboardScreen({ onInvest, onWithdraw }: DashboardProps) {
           transition={{ delay: 0.8, duration: 0.8, type: "spring", stiffness: 150 }}
         >
           <p className="text-6xl font-serif text-white/80 flex items-center justify-center gap-4">
-            $200
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-            >
-              <RefreshCw className="h-6 w-6 text-white/30" />
-            </motion.div>
+            {user?.kycStatus === 'completed' ? (
+              <span className="text-sm">See Real Balance Below</span>
+            ) : (
+              <>
+                $200
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                >
+                  <RefreshCw className="h-6 w-6 text-white/30" />
+                </motion.div>
+              </>
+            )}
           </p>
         </motion.div>
       </motion.div>
@@ -80,24 +157,40 @@ export function DashboardScreen({ onInvest, onWithdraw }: DashboardProps) {
       >
         <motion.div 
           className="relative w-64 h-64 flex items-center justify-center"
-          initial={{ scale: 0, rotate: -180 }}
-          animate={{ scale: 1, rotate: 0 }}
-          transition={{ delay: 1, duration: 1, type: "spring", stiffness: 100 }}
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ delay: 1, duration: 0.8, type: "spring", stiffness: 100 }}
         >
-          <div className="absolute inset-0 border-[16px] border-white/50 rounded-full" />
+          {/* Base circle ring */}
+          <div className="absolute inset-0 border-[8px] border-white/30 rounded-full" />
+          
+          {/* Continuous spinning rings to simulate earning */}
           <motion.div
-            className="absolute inset-0 border-[16px] border-transparent border-t-primary-blue rounded-full transform -rotate-45"
-            style={{ clipPath: "polygon(50% 0%, 100% 0%, 100% 100%, 50% 100%)" }}
-            initial={{ rotate: -45 }}
-            animate={{ rotate: 55 }}
-            transition={{ delay: 1.2, duration: 1.5, ease: "easeOut" }}
+            className="absolute inset-0 border-[8px] border-transparent border-t-success-green border-r-success-green/50 rounded-full"
+            animate={{ rotate: 360 }}
+            transition={{ 
+              duration: 3,
+              repeat: Infinity,
+              ease: "linear"
+            }}
           />
           <motion.div
-            className="absolute inset-0 border-[16px] border-transparent border-b-primary-blue rounded-full transform rotate-[100deg]"
-            style={{ clipPath: "polygon(0 0, 50% 0, 50% 100%, 0 100%)" }}
-            initial={{ rotate: 100 }}
-            animate={{ rotate: 200 }}
-            transition={{ delay: 1.4, duration: 1.5, ease: "easeOut" }}
+            className="absolute inset-3 border-[4px] border-transparent border-l-primary-blue border-b-primary-blue/60 rounded-full"
+            animate={{ rotate: -360 }}
+            transition={{ 
+              duration: 4,
+              repeat: Infinity,
+              ease: "linear"
+            }}
+          />
+          <motion.div
+            className="absolute inset-6 border-[2px] border-transparent border-r-success-green/40 rounded-full"
+            animate={{ rotate: 360 }}
+            transition={{ 
+              duration: 2,
+              repeat: Infinity,
+              ease: "linear"
+            }}
           />
           <motion.div 
             className="bg-white w-52 h-52 rounded-full flex flex-col items-center justify-center text-center shadow-lg"
@@ -145,7 +238,7 @@ export function DashboardScreen({ onInvest, onWithdraw }: DashboardProps) {
         >
           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
             <Button
-              onClick={onInvest}
+              onClick={handleInvest}
               className="w-full bg-primary-blue hover:bg-primary-blue/90 text-white rounded-xl h-14 text-lg"
             >
               PIX INVEST
@@ -157,7 +250,7 @@ export function DashboardScreen({ onInvest, onWithdraw }: DashboardProps) {
             whileTap={{ scale: 0.98 }}
           >
             <Button
-              onClick={onWithdraw}
+              onClick={handleWithdraw}
               variant="outline"
               className="w-full border-primary-blue text-primary-blue hover:bg-primary-blue/10 hover:text-primary-blue rounded-xl h-14 text-lg bg-transparent"
             >
@@ -179,6 +272,66 @@ export function DashboardScreen({ onInvest, onWithdraw }: DashboardProps) {
             </motion.div>
           </motion.div>
         </motion.div>
+
+        {/* Wallet Connection Status - KYC paused */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 2.2, duration: 0.6 }}
+          className="w-full mb-4"
+        >
+          <div className={`p-4 rounded-xl border-2 ${
+            user ? 'bg-green-50 border-green-200' : 'bg-blue-50 border-blue-200'
+          }`}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <CreditCard className={`w-6 h-6 ${
+                  user ? 'text-green-600' : 'text-blue-600'
+                }`} />
+                <div>
+                  <h3 className={`font-semibold ${
+                    user ? 'text-green-800' : 'text-blue-800'
+                  }`}>
+                    {user ? 'Wallet Connected' : 'Connect Wallet'}
+                  </h3>
+                  <p className={`text-sm ${
+                    user ? 'text-green-600' : 'text-blue-600'
+                  }`}>
+                    {user ? 'Ready for PIX investments (KYC paused)' : 'Connect your wallet to get started'}
+                  </p>
+                </div>
+              </div>
+              <Button
+                onClick={user ? () => console.log('Account settings') : handleCompleteKYC}
+                size="sm"
+                variant={user ? 'outline' : 'default'}
+                className={user ? 'border-green-300 text-green-700 hover:bg-green-100' : ''}
+              >
+                {user ? 'Settings' : 'Connect'}
+              </Button>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Avenia Balance Card - Show for all connected users (KYC paused) */}
+        {user && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 2.4, duration: 0.6 }}
+            className="w-full mb-4"
+          >
+            <BalanceCard
+              userId={user.id}
+              onPixPayment={() => router.push("/pix-invest")}
+              onConvert={(currency) => {
+                console.log(`[DashboardScreen] Starting ${currency} conversion`);
+                // Could navigate to a conversion flow page
+              }}
+            />
+          </motion.div>
+        )}
+
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
