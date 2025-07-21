@@ -17,6 +17,9 @@ dependencies:
   '@farcaster/mini-app-solana':
     specifier: '>=0.0.17 <1.0.0'
     version: 0.0.20(@farcaster/frame-sdk@0.1.7)(@solana/wallet-adapter-base@0.9.27)(@solana/wallet-adapter-react@0.15.39)(react@19.1.0)(typescript@5.8.3)
+  '@farcaster/miniapp-core':
+    specifier: ^0.3.6
+    version: 0.3.6(typescript@5.8.3)
   '@farcaster/miniapp-node':
     specifier: '>=0.1.5 <1.0.0'
     version: 0.1.6(typescript@5.8.3)
