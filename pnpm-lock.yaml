@@ -53,6 +53,9 @@ dependencies:
   '@solana/wallet-adapter-react':
     specifier: ^0.15.38
     version: 0.15.39(@solana/web3.js@1.98.2)(bs58@6.0.0)(react-native@0.80.1)(react@19.1.0)
+  '@solana/web3.js':
+    specifier: ^1.98.2
+    version: 1.98.2(typescript@5.8.3)
   '@tanstack/react-query':
     specifier: ^5.61.0
     version: 5.83.0(react@19.1.0)
@@ -9783,8 +9786,8 @@ packages:
         optional: true
     dependencies:
       '@adraffy/ens-normalize': 1.11.0
-      '@noble/curves': 1.8.1
-      '@noble/hashes': 1.7.1
+      '@noble/curves': 1.9.4
+      '@noble/hashes': 1.8.0
       '@scure/bip32': 1.6.2
       '@scure/bip39': 1.5.4
       abitype: 1.0.8(typescript@5.8.3)(zod@3.25.76)
