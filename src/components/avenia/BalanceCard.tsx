@@ -62,7 +62,7 @@ export const BalanceCard = ({ userId, onPixPayment, onConvert, onBalanceUpdate }
     } finally {
       setRefreshing(false);
     }
-  }, [userId, getBalances]);
+  }, [userId, getBalances, onBalanceUpdate]);
 
   useEffect(() => {
     loadBalances();

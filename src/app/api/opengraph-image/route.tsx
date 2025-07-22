@@ -4,7 +4,7 @@ import { APP_URL } from "~/lib/constants";
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   return new ImageResponse(
     (
       <div tw="flex h-full w-full">

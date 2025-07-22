@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, usePathname } from "next/navigation";
-import { Home, TrendingUp, CreditCard, ArrowLeft } from "lucide-react";
+import { Home, TrendingUp, CreditCard } from "lucide-react";
 import { Button } from "~/components/ui/Button";
 
 interface NavigationItem {

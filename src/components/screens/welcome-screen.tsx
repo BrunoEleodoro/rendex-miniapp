@@ -29,7 +29,7 @@ export function WelcomeScreen({ onNext }: ScreenProps = {}) {
   const router = useRouter()
   const [user, setUser] = useState<User | null>(null)
   const [isWalletConnected, setIsWalletConnected] = useState(false)
-  const [isConnecting, setIsConnecting] = useState(false)
+  const [_isConnecting, _setIsConnecting] = useState(false)
   const [neynarUser, setNeynarUser] = useState<any>(null)
   const [fetchingUser, setFetchingUser] = useState(false)
   const [isCreatingAccount, setIsCreatingAccount] = useState(false)
@@ -40,7 +40,7 @@ export function WelcomeScreen({ onNext }: ScreenProps = {}) {
   const { authenticatedUser, status: authStatus } = useQuickAuth()
   
   // Wagmi wallet connection
-  const { address: connectedWalletAddress, isConnected: wagmiConnected } = useAccount()
+  const { address: connectedWalletAddress, isConnected: _wagmiConnected } = useAccount()
 
   // Fetch Neynar user data when we have an authenticated user
   useEffect(() => {

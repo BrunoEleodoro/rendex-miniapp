@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
       }
       await existingUser.save();
       
-      const duration = Date.now() - startTime;
+      const _duration = Date.now() - startTime;
       return NextResponse.json({
         success: true,
         userId: existingUser._id.toString(),
@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
     console.log(`[API:FarcasterConnect] ${requestId} - Creating subaccount with FID: ${fid}`);
     
     try {
-      const subaccountResult = await aveniaService.createSubaccount(
+      const _subaccountResult = await aveniaService.createSubaccount(
         fid.toString(), // Use FID as subaccount ID
         displayName || username
       );

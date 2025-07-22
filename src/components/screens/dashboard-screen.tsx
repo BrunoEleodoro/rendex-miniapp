@@ -20,6 +20,7 @@ interface User {
   email: string;
   subaccountId?: string;
   kycStatus: 'not_started' | 'in_progress' | 'completed' | 'rejected';
+  walletAddress?: string;
 }
 
 interface Balances {
