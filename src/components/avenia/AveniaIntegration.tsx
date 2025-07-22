@@ -13,6 +13,7 @@ interface User {
   kycStatus: 'not_started' | 'in_progress' | 'completed' | 'rejected';
   farcasterFid?: string;
   walletAddress?: string;
+  subaccountId?: string;
 }
 
 export const AveniaIntegration = () => {
@@ -144,7 +145,7 @@ export const AveniaIntegration = () => {
         </div>
 
         <KYCFlow
-          userId={user.id}
+          userId={user.subaccountId || user.id}
           onKYCComplete={handleKYCComplete}
         />
       </div>
@@ -180,7 +181,7 @@ export const AveniaIntegration = () => {
 
       {/* Balance Card */}
       <BalanceCard
-        userId={user.id}
+        userId={user.subaccountId || user.id}
         onPixPayment={() => setShowPixModal(true)}
         onConvert={handleConversion}
       />
@@ -221,7 +222,7 @@ export const AveniaIntegration = () => {
       <PIXPaymentModal
         isOpen={showPixModal}
         onClose={() => setShowPixModal(false)}
-        userId={user.id}
+        userId={user.subaccountId || user.id}
         onSuccess={handlePixPaymentSuccess}
       />
     </div>

@@ -1,10 +1,11 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "~/components/ui/Button"
 import { Input } from "~/components/ui/input"
 import { motion } from "framer-motion"
 import { Wallet, ArrowRight } from "lucide-react"
+import { useAccount, useConnect } from "wagmi"
 
 interface WalletConnectProps {
   onWalletConnected: (result: {
@@ -21,14 +22,42 @@ export function WalletConnect({ onWalletConnected }: WalletConnectProps) {
   const [showNameInput, setShowNameInput] = useState(false)
   const [walletAddress, setWalletAddress] = useState('')
 
+  // Wagmi hooks for enhanced wallet integration
+  const { address, isConnected } = useAccount()
+  const { connect, connectors } = useConnect()
+
+  // Handle Wagmi connection success
+  useEffect(() => {
+    if (isConnected && address && !walletAddress) {
+      console.log('[WalletConnect] Wagmi wallet connected:', address);
+      setWalletAddress(address);
+      setShowNameInput(true);
+    }
+  }, [isConnected, address, walletAddress]);
+
   const connectWallet = async () => {
     console.log('[WalletConnect] Starting wallet connection...');
     
     try {
-      // For demo purposes, we'll simulate wallet connection
-      // In production, you'd use wagmi, web3modal, or similar
+      // If Wagmi connectors are available, use them
+      if (connectors.length > 0) {
+        console.log('[WalletConnect] Available Wagmi connectors:', connectors.map(c => c.name));
+        
+        // Try to connect with the first available connector (usually MetaMask or Coinbase)
+        const connector = connectors.find(c => 
+          c.name.includes('MetaMask') || 
+          c.name.includes('Coinbase') || 
+          c.name.includes('Injected')
+        ) || connectors[0];
+        
+        console.log('[WalletConnect] Connecting with:', connector.name);
+        connect({ connector });
+        return;
+      }
+      
+      // Fallback to direct ethereum provider
       if (typeof window !== 'undefined' && (window as any).ethereum) {
-        console.log('[WalletConnect] Requesting wallet connection...');
+        console.log('[WalletConnect] Requesting wallet connection via ethereum provider...');
         
         const accounts = await (window as any).ethereum.request({
           method: 'eth_requestAccounts'

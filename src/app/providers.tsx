@@ -27,14 +27,15 @@ function AuthProviders({
     SessionProvider: React.ComponentType<any> | null;
     AuthKitProvider: React.ComponentType<any> | null;
     loaded: boolean;
-  }>({
+  }>(() => ({
     SessionProvider: null,
     AuthKitProvider: null,
-    loaded: false,
-  });
+    loaded: !shouldUseSession, // If we don't need session, start as loaded
+  }));
 
   useEffect(() => {
     if (!shouldUseSession) {
+      // If we don't need session, mark as loaded immediately
       setAuthComponents({
         SessionProvider: null,
         AuthKitProvider: null,
@@ -82,7 +83,14 @@ function AuthProviders({
   }, [shouldUseSession]);
 
   if (!authComponents.loaded) {
-    return <></>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
   }
 
   if (!shouldUseSession || !authComponents.SessionProvider) {

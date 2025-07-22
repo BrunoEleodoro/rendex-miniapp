@@ -28,22 +28,66 @@ export async function POST(request: NextRequest) {
     await connectMongoDB();
     const aveniaService = new AveniaService();
 
-    // Get user and subaccount ID
-    const user = await User.findById(userId);
-    if (!user || !user.aveniaSubaccountId) {
-      console.error(`[API:PIXDeposit] ${requestId} - User not found or no subaccount: ${userId}`);
+    // Get user and subaccount ID - handle both ObjectId and username/email
+    let user;
+    
+    // Try to find by ObjectId first, then fall back to username/email
+    if (userId.match(/^[0-9a-fA-F]{24}$/)) {
+      // Valid ObjectId format
+      user = await User.findById(userId);
+    } else {
+      // Assume it's username or email
+      user = await User.findOne({
+        $or: [
+          { email: userId },
+          { farcasterUsername: userId },
+          { id: userId } // Custom ID field
+        ]
+      });
+    }
+
+    if (!user) {
+      console.error(`[API:PIXDeposit] ${requestId} - User not found: ${userId}`);
       return NextResponse.json(
-        { error: 'User not found or no subaccount' },
+        { error: 'User not found' },
         { status: 404 }
       );
     }
 
-    console.log(`[API:PIXDeposit] ${requestId} - User found: ${user.email}, subaccount: ${user.aveniaSubaccountId}`);
+    console.log(`[API:PIXDeposit] ${requestId} - User found: ${user.email}, subaccount: ${user.aveniaSubaccountId || 'none - will create'}`);
+
+    // If user doesn't have a subaccount, create one automatically
+    if (!user.aveniaSubaccountId) {
+      console.log(`[API:PIXDeposit] ${requestId} - User has no subaccount, creating one automatically`);
+      
+      try {
+        const subaccountName = `${user.farcasterUsername || user.email.split('@')[0] || 'user'}-subaccount`;
+        console.log(`[API:PIXDeposit] ${requestId} - Creating subaccount with name: ${subaccountName}`);
+        
+        const subaccountResult = await aveniaService.createSubaccount(user._id.toString(), subaccountName);
+        
+        // Update user with new subaccount ID
+        user.aveniaSubaccountId = subaccountResult.subaccountId;
+        await user.save();
+        
+        console.log(`[API:PIXDeposit] ${requestId} - Subaccount created successfully: ${subaccountResult.subaccountId}`);
+      } catch (subaccountError: any) {
+        console.error(`[API:PIXDeposit] ${requestId} - Failed to create subaccount:`, subaccountError.message);
+        return NextResponse.json(
+          { error: 'Failed to create user subaccount', details: subaccountError.message },
+          { status: 500 }
+        );
+      }
+    }
+
+    console.log(`[API:PIXDeposit] ${requestId} - User ready for PIX deposit: ${user.email}, subaccount: ${user.aveniaSubaccountId}`);
 
     // Step 1: Get PIX to BRLA quote with subaccount
-    console.log(`[API:PIXDeposit] ${requestId} - Getting PIX to BRLA quote for amount: ${outputAmount} BRLA, subaccount: ${user.aveniaSubaccountId}`);
+    // Determine output payment method based on whether we're sending to external wallet
+    const outputPaymentMethod = walletAddress ? 'POLYGON' : 'INTERNAL';
+    console.log(`[API:PIXDeposit] ${requestId} - Getting PIX to BRLA quote for amount: ${outputAmount} BRLA, subaccount: ${user.aveniaSubaccountId}, method: ${outputPaymentMethod}`);
     
-    const quote = await aveniaService.getPixToBRLAQuote(outputAmount, user.aveniaSubaccountId);
+    const quote = await aveniaService.getPixToBRLAQuote(outputAmount, user.aveniaSubaccountId, outputPaymentMethod);
     console.log(`[API:PIXDeposit] ${requestId} - Quote received - Input: ${quote.inputAmount} BRL, Output: ${quote.outputAmount} BRLA`);
     
     // Step 2: Create PIX ticket

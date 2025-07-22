@@ -9,6 +9,7 @@ interface BalanceCardProps {
   userId: string;
   onPixPayment: () => void;
   onConvert: (currency: 'USDC' | 'USDT') => void;
+  onBalanceUpdate?: (balances: Balances) => void;
 }
 
 interface Balances {
@@ -18,7 +19,7 @@ interface Balances {
   USDM: string;
 }
 
-export const BalanceCard = ({ userId, onPixPayment, onConvert }: BalanceCardProps) => {
+export const BalanceCard = ({ userId, onPixPayment, onConvert, onBalanceUpdate }: BalanceCardProps) => {
   const [balances, setBalances] = useState<Balances | null>(null);
   const [realTimeMessage, setRealTimeMessage] = useState<string>('');
   const [refreshing, setRefreshing] = useState(false);
@@ -54,6 +55,7 @@ export const BalanceCard = ({ userId, onPixPayment, onConvert }: BalanceCardProp
     try {
       const userBalances = await getBalances(userId);
       setBalances(userBalances);
+      onBalanceUpdate?.(userBalances);
       console.log(`[BalanceCard] Balances loaded successfully for user: ${userId}`, userBalances);
     } catch (error) {
       console.error(`[BalanceCard] Failed to load balances for user ${userId}:`, error);

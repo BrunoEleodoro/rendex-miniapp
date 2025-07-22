@@ -3,7 +3,10 @@ import mongoose, { Document, Model } from 'mongoose';
 export interface IUser extends Document {
   _id: string;
   email: string;
-  farcasterFid?: string;
+  farcasterFid?: number;
+  farcasterUsername?: string;
+  farcasterDisplayName?: string;
+  farcasterPfpUrl?: string;
   walletAddress?: string;
   aveniaTokens?: {
     accessToken: string;
@@ -40,6 +43,18 @@ const userSchema = new mongoose.Schema<IUser>({
     trim: true,
   },
   farcasterFid: {
+    type: Number,
+    sparse: true,
+  },
+  farcasterUsername: {
+    type: String,
+    sparse: true,
+  },
+  farcasterDisplayName: {
+    type: String,
+    sparse: true,
+  },
+  farcasterPfpUrl: {
     type: String,
     sparse: true,
   },
@@ -80,6 +95,7 @@ const userSchema = new mongoose.Schema<IUser>({
 // Indexes for better query performance
 userSchema.index({ email: 1 });
 userSchema.index({ farcasterFid: 1 });
+userSchema.index({ farcasterUsername: 1 });
 userSchema.index({ walletAddress: 1 });
 userSchema.index({ aveniaSubaccountId: 1 });
 userSchema.index({ kycStatus: 1 });

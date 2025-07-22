@@ -242,15 +242,15 @@ export class AveniaClient {
     return result;
   }
 
-  async getPixToBRLAQuote(outputAmount: number, subaccountId: string): Promise<any> {
-    console.log(`[AveniaClient] Getting PIX to BRLA quote - Amount: ${outputAmount}, SubAccount: ${subaccountId}`);
+  async getPixToBRLAQuote(outputAmount: number, subaccountId: string, outputPaymentMethod: string = 'INTERNAL'): Promise<any> {
+    console.log(`[AveniaClient] Getting PIX to BRLA quote - Amount: ${outputAmount}, SubAccount: ${subaccountId}, OutputMethod: ${outputPaymentMethod}`);
     
     const params = new URLSearchParams({
       outputAmount: outputAmount.toString(),
       inputCurrency: 'BRL',
       inputPaymentMethod: 'PIX',
       outputCurrency: 'BRLA',
-      outputPaymentMethod: 'INTERNAL',
+      outputPaymentMethod: outputPaymentMethod,
       inputThirdParty: 'false',
       outputThirdParty: 'false',
       blockchainSendMethod: 'TRANSFER',
@@ -262,6 +262,7 @@ export class AveniaClient {
     console.log(`[AveniaClient] Quote received:`, {
       inputAmount: result.inputAmount,
       outputAmount: result.outputAmount,
+      outputPaymentMethod: outputPaymentMethod,
       fees: result.appliedFees?.length || 0,
       quoteToken: result.quoteToken ? 'Present' : 'Missing'
     });
@@ -269,23 +270,31 @@ export class AveniaClient {
     return result;
   }
 
-  async createPixTicket(subaccountId: string, quoteToken: string, beneficiaryWalletAddress?: string): Promise<any> {
-    console.log(`[AveniaClient] Creating PIX ticket - SubAccount: ${subaccountId}, Wallet: ${beneficiaryWalletAddress || 'internal'}`);
+  async createPixTicket(subaccountId: string, quoteToken: string, beneficiaryWalletId?: string): Promise<any> {
+    console.log(`[AveniaClient] Creating PIX ticket - SubAccount: ${subaccountId}, BeneficiaryWalletId: ${beneficiaryWalletId || 'internal'}`);
     
+    // For external transfers, we need a real beneficiary wallet ID
+    // For internal transfers, we use the default internal wallet ID
+    let finalBeneficiaryWalletId: string;
+    
+    if (beneficiaryWalletId && beneficiaryWalletId !== "00000000-0000-0000-0000-000000000000") {
+      // External wallet transfer
+      finalBeneficiaryWalletId = beneficiaryWalletId;
+      console.log(`[AveniaClient] Using external beneficiary wallet: ${finalBeneficiaryWalletId}`);
+    } else {
+      // Internal wallet transfer
+      finalBeneficiaryWalletId = "00000000-0000-0000-0000-000000000000";
+      console.log(`[AveniaClient] Using internal wallet (default)`);
+    }
+    
+    // For PIX to BRLA conversion, we only need these fields according to Avenia documentation
     const ticketData = {
       quoteToken,
       ticketBrlPixInput: {
-        remitterId: "",
-        additionalData: ""
+        additionalData: ""  // Optional additional data for PIX
       },
       ticketBlockchainOutput: {
-        beneficiaryWalletId: beneficiaryWalletAddress || "00000000-0000-0000-0000-000000000000"
-      },
-      ticketBlockchainInput: {
-        walletAddress: "0x0000000000000000000000000000000000000000"
-      },
-      ticketBrlPixOutput: {
-        beneficiaryBrlBankAccountId: ""
+        beneficiaryWalletId: finalBeneficiaryWalletId
       }
     };
 
@@ -337,6 +346,45 @@ export class AveniaClient {
     });
     
     console.log(`[AveniaClient] Beneficiary wallet created - ID: ${result.id}`);
+    return result;
+  }
+
+  async getBeneficiaryWallets(subaccountId: string, walletAddress?: string): Promise<{
+    wallets: Array<{
+      id: string;
+      alias: string;
+      description: string;
+      walletAddress: string;
+      walletChain: string;
+      walletMemo: string;
+      createdAt: string;
+    }>;
+    cursor?: string;
+  }> {
+    console.log(`[AveniaClient] Getting beneficiary wallets for subaccount: ${subaccountId}${walletAddress ? `, wallet: ${walletAddress}` : ''}`);
+    
+    const params = new URLSearchParams({
+      subAccountId: subaccountId,
+    });
+    
+    if (walletAddress) {
+      params.append('walletAddress', walletAddress);
+    }
+    
+    const result = await this.request<{
+      wallets: Array<{
+        id: string;
+        alias: string;
+        description: string;
+        walletAddress: string;
+        walletChain: string;
+        walletMemo: string;
+        createdAt: string;
+      }>;
+      cursor?: string;
+    }>(`/v2/account/beneficiaries/wallets?${params}`);
+    
+    console.log(`[AveniaClient] Found ${result.wallets.length} beneficiary wallets`);
     return result;
   }
 

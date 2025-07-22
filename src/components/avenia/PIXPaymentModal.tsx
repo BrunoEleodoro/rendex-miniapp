@@ -1,30 +1,53 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog } from '../ui/dialog';
 import { Button } from '../ui/Button';
-import { Input } from '../ui/input';
 import { Label } from '../ui/label';
+import { Input } from '../ui/input';
 import { useAvenia } from '../../hooks/useAvenia';
 import { useRealTimeUpdates } from '../../hooks/useRealTimeUpdates';
+import QRCode from 'qrcode';
 
 interface PIXPaymentModalProps {
   isOpen: boolean;
   onClose: () => void;
   userId: string;
   onSuccess: () => void;
+  walletAddress?: string; // Optional wallet address for external transfers
 }
 
-export const PIXPaymentModal = ({ isOpen, onClose, userId, onSuccess }: PIXPaymentModalProps) => {
+export const PIXPaymentModal = ({ isOpen, onClose, userId, onSuccess, walletAddress }: PIXPaymentModalProps) => {
   const [step, setStep] = useState<'amount' | 'payment' | 'success'>('amount');
   const [amount, setAmount] = useState('');
   const [brCode, setBrCode] = useState('');
+  const [qrCodeDataURL, setQrCodeDataURL] = useState<string>('');
   const [ticketId, setTicketId] = useState('');
   const [error, setError] = useState('');
   const [expiration, setExpiration] = useState('');
   const [realTimeMessage, setRealTimeMessage] = useState<string>('');
   
   const { createPixPayment, loading } = useAvenia();
+
+  // Generate QR code when brCode changes
+  useEffect(() => {
+    if (brCode) {
+      QRCode.toDataURL(brCode, {
+        errorCorrectionLevel: 'M',
+        type: 'image/png',
+        margin: 1,
+        color: {
+          dark: '#000000',
+          light: '#FFFFFF'
+        },
+        width: 200
+      }).then((dataURL) => {
+        setQrCodeDataURL(dataURL);
+      }).catch((err) => {
+        console.error('Error generating QR code:', err);
+      });
+    }
+  }, [brCode]);
 
   // Set up real-time updates via SSE
   const { isConnected, connectionError } = useRealTimeUpdates({
@@ -53,32 +76,58 @@ export const PIXPaymentModal = ({ isOpen, onClose, userId, onSuccess }: PIXPayme
     autoReconnect: true
   });
 
+  const normalizeAmount = (value: string) => {
+    // Remove any non-numeric characters except dots and commas
+    let cleaned = value.replace(/[^\d.,]/g, '');
+    
+    // Replace comma with dot for decimal separator
+    cleaned = cleaned.replace(/,/g, '.');
+    
+    // Ensure only one decimal point
+    const parts = cleaned.split('.');
+    if (parts.length > 2) {
+      cleaned = parts[0] + '.' + parts.slice(1).join('');
+    }
+    
+    return cleaned;
+  };
+
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    const normalized = normalizeAmount(value);
+    setAmount(normalized);
+  };
+
+  const getNumericAmount = () => {
+    const normalized = normalizeAmount(amount);
+    return parseFloat(normalized) || 0;
+  };
+
   const handleCreatePayment = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     
-    const amountNum = parseFloat(amount);
+    const amountNum = getNumericAmount();
     if (!amountNum || amountNum <= 0) {
       setError('Please enter a valid amount');
       return;
     }
     
-    console.log(`[PIXPaymentModal] Creating PIX payment for user: ${userId}, amount: ${amountNum}`);
+    console.log(`[PIXPaymentModal] Creating PIX payment for user: ${userId}, amount: ${amountNum}, wallet: ${walletAddress || 'internal'}`);
     
     try {
-      const payment = await createPixPayment(userId, amountNum);
+      const payment = await createPixPayment(userId, amountNum, walletAddress);
       setBrCode(payment.brCode);
       setTicketId(payment.ticketId);
       setExpiration(payment.expiration);
       setStep('payment');
       
-      console.log(`[PIXPaymentModal] PIX payment created - ticket: ${payment.ticketId}, waiting for webhook completion via real-time updates`);
+      console.log(`[PIXPaymentModal] PIX payment created - ticket: ${payment.ticketId}, wallet: ${walletAddress ? 'external' : 'internal'}, waiting for webhook completion via real-time updates`);
     } catch (err: any) {
       console.error(`[PIXPaymentModal] PIX payment creation failed:`, err.message);
       setError(err.message || 'Failed to create PIX payment');
     }
   };
-
 
   const copyBrCode = () => {
     navigator.clipboard.writeText(brCode);
@@ -89,6 +138,7 @@ export const PIXPaymentModal = ({ isOpen, onClose, userId, onSuccess }: PIXPayme
     setStep('amount');
     setAmount('');
     setBrCode('');
+    setQrCodeDataURL('');
     setTicketId('');
     setError('');
     setExpiration('');
@@ -96,13 +146,15 @@ export const PIXPaymentModal = ({ isOpen, onClose, userId, onSuccess }: PIXPayme
     onClose();
   };
 
-  const formatCurrency = (value: string) => {
-    const numValue = parseFloat(value) || 0;
+  const formatCurrency = (value: string | number) => {
+    const numValue = typeof value === 'string' ? getNumericAmount() : value;
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL',
     }).format(numValue);
   };
+
+  const displayAmount = getNumericAmount().toFixed(2);
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -147,23 +199,23 @@ export const PIXPaymentModal = ({ isOpen, onClose, userId, onSuccess }: PIXPayme
           {step === 'amount' && (
             <form onSubmit={handleCreatePayment} className="space-y-4">
               <div>
-                <Label htmlFor="amount">Amount (BRLA)</Label>
+                <Label htmlFor="amount" className="text-base font-semibold mb-3 block">Amount (BRLA)</Label>
                 <Input
                   id="amount"
-                  type="number"
+                  type="text"
+                  inputMode="decimal"
                   value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
+                  onChange={handleAmountChange}
                   placeholder="0.00"
-                  step="0.01"
-                  min="0.01"
                   required
+                  className="text-black text-3xl font-bold py-6 px-4 text-center h-20 w-full border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
                 />
-                <p className="text-sm text-gray-600 mt-1">
-                  You will receive {amount || '0'} BRLA stablecoins
+                <p className="text-sm text-gray-600 mt-3 text-center">
+                  You will receive {displayAmount} BRLA stablecoins
                 </p>
               </div>
 
-              <Button type="submit" disabled={loading} className="w-full">
+              <Button type="submit" disabled={loading || getNumericAmount() <= 0} className="w-full">
                 {loading ? 'Creating Payment...' : `Create PIX Payment - ${formatCurrency(amount)}`}
               </Button>
             </form>
@@ -173,15 +225,32 @@ export const PIXPaymentModal = ({ isOpen, onClose, userId, onSuccess }: PIXPayme
             <div className="space-y-4">
               <div className="text-center">
                 <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                  {/* QR Code would go here - you'd need a QR code library */}
-                  <div className="w-48 h-48 bg-gray-300 mx-auto rounded flex items-center justify-center">
-                    <span className="text-gray-600">QR Code</span>
-                  </div>
+                  {qrCodeDataURL ? (
+                    <img 
+                      src={qrCodeDataURL} 
+                      alt="PIX QR Code" 
+                      className="w-48 h-48 mx-auto rounded"
+                    />
+                  ) : (
+                    <div className="w-48 h-48 bg-gray-300 mx-auto rounded flex items-center justify-center">
+                      <span className="text-gray-600">Generating QR Code...</span>
+                    </div>
+                  )}
                 </div>
                 
                 <p className="text-sm text-gray-600 mb-2">
                   Scan the QR code with your banking app or copy the PIX code below:
                 </p>
+                
+                {walletAddress && (
+                  <div className="bg-blue-50 p-3 rounded-lg mb-4">
+                    <p className="text-sm text-blue-800">
+                      <strong>BRLA will be transferred to:</strong><br />
+                      <span className="font-mono text-xs break-all">{walletAddress}</span><br />
+                      <span className="text-xs text-blue-600 mt-1 block">📍 POLYGON Network</span>
+                    </p>
+                  </div>
+                )}
                 
                 <div className="bg-gray-50 p-3 rounded border text-xs break-all">
                   {brCode}
@@ -200,8 +269,8 @@ export const PIXPaymentModal = ({ isOpen, onClose, userId, onSuccess }: PIXPayme
               <div className="bg-blue-50 p-4 rounded-lg">
                 <h4 className="font-medium text-blue-900 mb-2">Payment Details:</h4>
                 <div className="text-sm space-y-1 text-blue-800">
-                  <p>Amount: {formatCurrency(amount)}</p>
-                  <p>You&apos;ll receive: {amount} BRLA</p>
+                  <p>Amount: {formatCurrency(getNumericAmount())}</p>
+                  <p>You&apos;ll receive: {displayAmount} BRLA</p>
                   <p>Expires: {new Date(expiration).toLocaleTimeString()}</p>
                 </div>
               </div>
@@ -222,7 +291,7 @@ export const PIXPaymentModal = ({ isOpen, onClose, userId, onSuccess }: PIXPayme
               
               <h3 className="text-lg font-semibold text-green-600">Payment Successful!</h3>
               <p className="text-gray-600">
-                You have successfully converted {formatCurrency(amount)} to {amount} BRLA stablecoins.
+                You have successfully converted {formatCurrency(getNumericAmount())} to {displayAmount} BRLA stablecoins.
               </p>
               
               <Button onClick={() => { onSuccess(); handleClose(); }} className="w-full">

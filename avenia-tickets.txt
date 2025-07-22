@@ -1,0 +1,887 @@
+Tickets Guide
+Now, we're moving from quoting to executing transactions—this is where things actually happen!
+
+Before proceeding, make sure you've already read the Quote section, as this will serve as the foundation for everything covered here.
+
+Let's begin by breaking down the required fields, which will vary depending on how you structure your quote.
+
+First, let’s take a look at how we’ll be tracking the operations related to the ticket
+for example, by using the Get Ticket and Get Ticket by ID endpoints.
+
+Get All Tickets
+This endpoint allows you to retrieve the entire history of created tickets.
+
+https://api.sandbox.avenia.io:10952/v2/account/tickets/
+
+Query Parameters
+These are the possible filters that can be applied when fetching ticket history:
+
+Parameter	Type	Description
+subAccountId	string	Filter by sub-account ID
+createdAfter	string	Fetch tickets created after a specific date
+createdBefore	string	Fetch tickets created before a specific date
+cursor	string	Used for pagination
+status	string	Filter tickets by their current status (PENDING, PAID, etc.)
+inputCurrency	string	Filter by the input currency used in the ticket
+outputCurrency	string	Filter by the output currency received in the ticket
+outputPaymentMethod	string	Filter by the payment method used for the output
+endToEndId	string	Filter by identifier assigned to each Pix transaction to enable end-to-end transaction tracking and verification.
+externalId	string	Filter by the externalId, an identifier assigned to each ticket for internal tracking purposes in your system.
+cUrl Example
+curl -X GET "https://api.sandbox.avenia.io:10952/v2/account/tickets/" \
+-H "Content-Type: application/json" \
+-H "Authorization: Bearer eyJhdXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" \
+-G \
+--data-urlencode "subAccountId=YOUR_SUB_ACCOUNT_ID" \
+--data-urlencode "createdAfter=2024-01-01T00:00:00Z" \
+--data-urlencode "createdBefore=2024-12-31T23:59:59Z" \
+--data-urlencode "cursor=YOUR_CURSOR_VALUE" \
+--data-urlencode "status=PAID" \
+--data-urlencode "inputCurrency=BRL" \
+--data-urlencode "outputCurrency=BRLA" \
+--data-urlencode "outputPaymentMethod=POLYGON" \
+--data-urlencode "endToEndId=00000000-0000-0000-0000-000000000000" \
+--data-urlencode "externalId=00000000-0000-0000-0000-000000000000"
+
+JSON Response
+{
+	"tickets": [
+      {
+        "id": "385e871a-5628-4aa2-a28d-cafe7c876898",
+        "externalId": "",
+        "workspaceId": "2ac803ad-faf7-489f-9c1a-c6a64072e699",
+        "userId": "05505dde-c2e4-47c5-bd5c-071b4c4bb6a4",
+        "status": "PROCESSING",
+        "reason": "",
+        "failureReason": "",
+        "createdAt": "2025-04-04T14:51:29.702406Z",
+        "updatedAt": "2025-04-04T14:51:40.747899Z",
+        "expiresAt": "2025-04-05T14:51:29.701368Z",
+        "quote": {
+          "id": "61ee7d2f-f658-4c6a-9f4c-b3d510d09b57",
+          "ticketId": "385e871a-5628-4aa2-a28d-cafe7c876898",
+          "inputCurrency": "BRL",
+          "inputPaymentMethod": "PIX",
+          "inputAmount": "100",
+          "outputCurrency": "BRLA",
+          "outputPaymentMethod": "POLYGON",
+          "outputAmount": "99.8",
+          "markupCurrency": "",
+          "markupAmount": "0",
+          "sendMethod": "",
+          "inputThirdParty": false,
+          "outputThirdParty": false,
+          "basePrice": "1",
+          "appliedFees": [
+            {
+              "type": "Markup Fee",
+              "amount": "0",
+              "currency": "BRL",
+              "rebatable": false,
+              "description": "Total markup fees represented in the input currency."
+            },
+            {
+              "type": "In Fee",
+              "amount": "0.2",
+              "currency": "BRL",
+              "rebatable": true,
+              "description": "Fees due to input currency and input payment method."
+            },
+            {
+              "type": "Conversion Fee",
+              "amount": "0",
+              "currency": "BRL",
+              "rebatable": true,
+              "description": "Fees due to conversion from input currency to output currency."
+            },
+            {
+              "type": "Out Fee",
+              "amount": "0",
+              "currency": "BRL",
+              "rebatable": true,
+              "description": "Fees due to output currency and output payment method."
+            },
+            {
+              "type": "Gas Fee",
+              "amount": "0",
+              "currency": "BRL",
+              "rebatable": false,
+              "description": "Fees due to blockchain transaction costs."
+            }
+          ],
+          "pairName": "BRLBRLA",
+          "outputBrCode": "",
+          "createdAt": "2025-04-04T14:51:29Z"
+        },
+        "rebate": {
+          "id": "94fe28a7-ce0c-4ce3-938f-6a4c0a4eec59",
+          "ticketId": "385e871a-5628-4aa2-a28d-cafe7c876898",
+          "amount": "0.1",
+          "currency": "BRLA",
+          "destinationWalletAddress": "0xb6e8860883039b6db937639b94e9a10ff7971bb6"
+        },
+        "brazilianFiatSenderInfo": {
+          "id": "1203f73b-0be3-45b8-8bbe-46b096a76415",
+          "ticketId": "385e871a-5628-4aa2-a28d-cafe7c876898",
+          "name": "Ada Capital Gestao de Recursos Ltda",
+          "taxId": "45981761000100",
+          "bankCode": "20018183",
+          "branchCode": "0001",
+          "accountNumber": "5703785980624896",
+          "accountType": "payment",
+          "endToEndId": "e20018183202504041451vbks2pewbiz"
+        },
+        "blockchainReceiverInfo": {
+          "id": "967ac673-a068-4314-a410-86cf1c522c4c",
+          "ticketId": "385e871a-5628-4aa2-a28d-cafe7c876898",
+          "walletAddress": "0xe41A4a64564D19f98867a4b43E743a7D988c9d68",
+          "walletChain": "INTERNAL",
+          "walletMemo": "",
+          "txHash": ""
+        },
+        "brlPixInputInfo": {
+          "id": "79228b3b-9ec5-4d9f-94a4-9235d18ff291",
+          "ticketId": "385e871a-5628-4aa2-a28d-cafe7c876898",
+          "referenceLabel": "82H1CRkm16ZsDs45Q76WUdlfQ",
+          "additionalData": "Avenia Ticket Payment",
+          "brCode": "00020126810014br.gov.bcb.pix01365c2c61a1-134b-4c34-958f-ea3122ac717f0219Avenia Ticket Payment5204000053039865406100.005802BR5917Avenia API Ltda6009Sao Paulo6229052582H1CRkm16ZsDs45Q76WUdlfQ6304D750"
+        }
+      },
+     ...
+    ],
+    "cursor": "MTUyLTE3NDE2MjI4MDI2Mzk="
+}
+
+
+note
+Everything related to the meaning of the fields will be explained shortly.
+
+Get Ticket by Id
+HTTP Get Request
+https://api.sandbox.avenia.io:10952/v2/account/tickets/TICKET-UUID-HERE
+
+cUrl Example
+curl -X GET "https://api.sandbox.avenia.io:10952/v2/account/tickets/TICKET-UUID-HERE" \
+-H "Content-Type: application/json" \
+-H "Authorization: Bearer eyJhdXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+
+JSON Response
+{
+  "ticket": {
+    "id": "385e871a-5628-4aa2-a28d-cafe7c876898",
+    "externalId": "",
+    "workspaceId": "2ac803ad-faf7-489f-9c1a-c6a64072e699",
+    "userId": "05505dde-c2e4-47c5-bd5c-071b4c4bb6a4",
+    "status": "PAID",
+    "reason": "",
+    "failureReason": "",
+    "createdAt": "2025-04-04T14:51:29.702406Z",
+    "updatedAt": "2025-04-04T14:51:50.888868Z",
+    "expiresAt": "2025-04-05T14:51:29.701368Z",
+    "quote": {
+      "id": "61ee7d2f-f658-4c6a-9f4c-b3d510d09b57",
+      "ticketId": "385e871a-5628-4aa2-a28d-cafe7c876898",
+      "inputCurrency": "BRL",
+      "inputPaymentMethod": "PIX",
+      "inputAmount": "100",
+      "outputCurrency": "BRLA",
+      "outputPaymentMethod": "INTERNAL",
+      "outputAmount": "99.8",
+      "markupCurrency": "",
+      "markupAmount": "0",
+      "sendMethod": "",
+      "inputThirdParty": false,
+      "outputThirdParty": false,
+      "basePrice": "1",
+      "appliedFees": [
+        {
+          "type": "Markup Fee",
+          "amount": "0",
+          "currency": "BRL",
+          "rebatable": false,
+          "description": "Total markup fees represented in the input currency."
+        },
+        {
+          "type": "In Fee",
+          "amount": "0.2",
+          "currency": "BRL",
+          "rebatable": true,
+          "description": "Fees due to input currency and input payment method."
+        },
+        {
+          "type": "Conversion Fee",
+          "amount": "0",
+          "currency": "BRL",
+          "rebatable": true,
+          "description": "Fees due to conversion from input currency to output currency."
+        },
+        {
+          "type": "Out Fee",
+          "amount": "0",
+          "currency": "BRL",
+          "rebatable": true,
+          "description": "Fees due to output currency and output payment method."
+        },
+        {
+          "type": "Gas Fee",
+          "amount": "0",
+          "currency": "BRL",
+          "rebatable": false,
+          "description": "Fees due to blockchain transaction costs."
+        }
+      ],
+      "pairName": "BRLBRLA",
+      "outputBrCode": "",
+      "createdAt": "2025-04-04T14:51:29Z"
+    },
+    "rebate": {
+      "id": "94fe28a7-ce0c-4ce3-938f-6a4c0a4eec59",
+      "ticketId": "385e871a-5628-4aa2-a28d-cafe7c876898",
+      "amount": "0.1",
+      "currency": "BRLA",
+      "destinationWalletAddress": "0xb6e8860883039b6db937639b94e9a10ff7971bb6"
+    },
+    "brazilianFiatSenderInfo": {
+      "id": "1203f73b-0be3-45b8-8bbe-46b096a76415",
+      "ticketId": "385e871a-5628-4aa2-a28d-cafe7c876898",
+      "name": "Ada Capital Gestao de Recursos Ltda",
+      "taxId": "45981761000100",
+      "bankCode": "20018183",
+      "branchCode": "0001",
+      "accountNumber": "5703785980624896",
+      "accountType": "payment",
+      "endToEndId": "e20018183202504041451vbks2pewbiz"
+    },
+    "blockchainReceiverInfo": {
+      "id": "967ac673-a068-4314-a410-86cf1c522c4c",
+      "ticketId": "385e871a-5628-4aa2-a28d-cafe7c876898",
+      "walletAddress": "0xe41A4a64564D19f98867a4b43E743a7D988c9d68",
+      "walletChain": "INTERNAL",
+      "walletMemo": "",
+      "txHash": "0x6eec33332c861e2641d9f121e19d52e528d38ca52d92572cd14cefb284bfd643"
+    },
+    "brlPixInputInfo": {
+      "id": "79228b3b-9ec5-4d9f-94a4-9235d18ff291",
+      "ticketId": "385e871a-5628-4aa2-a28d-cafe7c876898",
+      "referenceLabel": "82H1CRkm16ZsDs45Q76WUdlfQ",
+      "additionalData": "Avenia Ticket Payment",
+      "brCode": "00020126810014br.gov.bcb.pix01365c2c61a1-134b-4c34-958f-ea3122ac717f0219Avenia Ticket Payment5204000053039865406100.005802BR5917Avenia API Ltda6009Sao Paulo6229052582H1CRkm16ZsDs45Q76WUdlfQ6304D750"
+    }
+  }
+}
+
+
+note
+Everything related to the meaning of the fields will be explained shortly.
+
+Fields that remain unchanged, regardless of the information contained in the quoteToken
+info
+Keep in mind that all the fields listed here must be included in your JSON, regardless of any other conditions.
+
+Quote Token
+The quoteToken is essential to initiate the ticket. All the necessary information to proceed with the ticket will be extracted from it. Remember that you receive the quoteToken when you create a quote.
+
+Fields that will change based on the information contained in the quoteToken
+Here, all the data is dynamic. Depending on the information contained in the quoteToken, both the input for the ticket and the output returned to you will change.
+
+Keep in mind the block system, where you can construct the operation you want by simply assembling the necessary information together!
+
+info
+When creating a ticket, you may include an externalId to facilitate internal tracking within your system.
+
+At this point, your JSON should only contain these fields:
+
+{
+  "quoteToken": "eyJhdXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+  "externalId": "Hello World"
+}
+
+warning
+Depending on your quoteToken, additional fields may be required. Keep reading to explore all possible cases.
+
+If your input currency is fiat
+That input currency is BRL
+And if your Send Method is:
+PIX
+Optional fields:
+
+"additionalData": "hello <> world!"
+
+additionalData: additional information in the PIX
+
+Up to this point, your JSON should contain these fields if your input is fiat
+
+{
+  "quoteToken": "eyJhdXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+  "ticketBrlPixInput": {
+    "additionalData": "BRLA"
+  }
+}
+
+as output, you'll get this extra field:
+
+"brCode": "..."
+
+brCode: the qrCode where you have to make the pix
+
+If your input currency is blockchain
+Here, you'll find both fields that vary based on your sendBlockchainMethod and fields that remain constant in both cases.
+
+Fields independent of sendBlockchainMethod:
+
+	{
+	"ticketBlockchainInput": {
+		"walletAddress": "0xXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+		....
+		}
+	}
+
+walletAddress: Here, you will provide the wallet address that will be sending the tokens — your own wallet.
+
+info
+If the wallet you specify is a Avenia Wallet, you do not need to include the PERMIT or TRANSFER fields.
+
+and its sendBlockchainMethod is PERMIT
+if your choice is permit, you need to send the signature of the token transfer, so that the Avenia concludes on its side.
+
+{
+  "ticketBlockchainInput": {
+    "walletAddress": "0xXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "permit": {
+      "r": "0xXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+      "s": "0xXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+      "v": 1,
+      "nonce": 1,
+      "deadline": 1
+    },
+    "personal": {
+      "signature": "0xXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+      "deadline": 10
+    }
+  }
+}
+
+here you can decide whether you want to send either a signature on the permit template, which will be passed the r, s, v and nonce, or the personal signature.
+
+Permit Signature
+
+{
+  "ticketBlockchainInput": {
+    "walletAddress": "0xXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "permit": {
+      "r": "0xXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+      "s": "0xXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+      "v": 1,
+      "nonce": 1,
+      "deadline": 1
+    }
+  }
+}
+
+Personal Signature
+
+{
+  "ticketBlockchainInput": {
+    "walletAddress": "0xXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "personal": {
+      "signature": "0xXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+      "deadline": 10
+    }
+  }
+}
+
+{
+  "quoteToken": "eyJhdXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+  "ticketBlockchainInput": {
+    "walletAddress": "0xXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "permit": {
+      "r": "0xXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+      "s": "0xXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+      "v": 1,
+      "nonce": 1,
+      "deadline": 1
+    },
+    "personal": {
+      "signature": "0xXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+      "deadline": 10
+    }
+  }
+}
+
+and its sendBlockchainMethod is TRANSFER
+You don't need to add anything else as input to the ticket itself, just transfer the tokens to your BA wallet. Importantly, the tokens must be transferred to your Business Account!
+
+If your output currency is fiat
+That output currency is BRL
+And if your Send Method is:
+PIX
+{
+  "ticketBrlPixOutput": {
+    "beneficiaryBrlBankAccountId": "00000000-0000-0000-0000-000000000000",
+    "pixMessage": "hi Avenia"
+  }
+}
+
+beneficiaryBrlBankAccountId: Mandatory. The id of the beneficiary account that this pix belongs to must be passed, clearly in view of the fact that it has already been registered in the beneficiary banking account section
+
+pixMessage: Optional. a message you want to be sent in the pix
+
+so far your json should look like this:
+
+{
+  "quoteToken": "eyJhdXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"]
+  ...
+  "ticketBrlPixOutput": {
+	"beneficiaryBrlBankAccountId": "00000000-0000-0000-0000-000000000000",
+	"pixMessage": "hi Avenia"
+	}
+}
+
+info
+The ellipsis (...) represents fields inherited from previous steps, specifically the input currencies and their related details.
+
+If output currency is blockchain
+warning
+You must already have the wallet registered in Beneficiary Wallet here you only need to enter the beneficiaryWallet you are going to receive.
+
+{
+  "ticketBlockchainOutput": {
+    "beneficiaryWalletId": "00000000-0000-0000-0000-000000000000"
+  }
+}
+
+beneficiaryWalletId: The id of the beneficiary wallet which sent the tokens to must be passed, clearly in view of the fact that it has already been registered in the beneficiary wallet section
+
+so far your json input should look like this:
+
+{
+  "quoteToken": "eyJhdXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+  ...
+  "ticketBlockchainOutput": {
+    "beneficiaryWalletId": "00000000-0000-0000-0000-000000000000"
+	}
+}
+
+For those who want to apply a markup
+warning
+The markup must be sent to a Avenia Wallet
+
+Required fields:
+
+{
+  "ticketMarkupInput": {
+    "markupWalletAddress": "0xXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+  }
+}
+
+markupWalletAddress: Your Avenia Wallet address
+
+so far your input should look like this:
+
+{
+  "quoteToken": "eyJhdXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+  ...
+"ticketMarkupInput": {
+	"markupWalletAddress": "0xXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+	}
+}
+
+Keep in mind
+Important points to keep in mind to better understand how tickets work
+
+The expiration of the ticket is set depending on the type of operation, if it is a conversion, the expiration is 5 minutes, if it is not a conversion, the expiration is 24 hours. Conversions are defined when the currency behind the input is different from the currency behind the output.
+If you send money to something belonging to Avenia without creating a ticket first, regardless of the method—FIAT or BLOCKCHAIN—the received amount will be forwarded to your Business Account in the sent currency. For example, if you make a PIX transfer, the amount will be deposited into your Business Account as Avenia Token.
+You can define a default wallet if you send money to the Avenia without first creating a ticket, so you need to create a default deposit wallet.
+Practice Time
+Here we'll show you an example of two cases based on everything you've learned so far. It's very important that you keep in mind that each part of the json is a block, where depending on the scenario you want to set up, you just need to fit in what's relevant to you.
+
+Pix to Token
+Let's start, make sure you've already read the Quote section!
+
+Step 1 - Getting right quote!
+By calling the quote endpoint with the required information, you’ll obtain the following:
+
+HTTP Get Request
+https://api.sandbox.avenia.io:10952/v2/account/quote/fixed-rate
+
+Field	Type	Value	Description
+inputCurrency	string	BRL	The currency used for payment.
+inputPaymentMethod	string	PIX	The payment method used.
+inputAmount	number	100	The amount being sent.
+outputCurrency	string	BRLA	The currency to be received.
+outputPaymentMethod	string	POLYGON	The method of receiving funds.
+cUrl Example
+curl -X GET "https://api.sandbox.avenia.io:10952/v2/account/quote/fixed-rate" \
+-H "Content-Type: application/json" \
+-H "Authorization: Bearer eyJhdXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" \
+-G \
+--data-urlencode "inputCurrency=BRL" \
+--data-urlencode "inputPaymentMethod=PIX" \
+--data-urlencode "inputAmount=100" \
+--data-urlencode "outputCurrency=BRLA" \
+--data-urlencode "outputPaymentMethod=POLYGON"
+
+JSON Response
+{
+  "quoteToken": "eyJhdXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+  "inputCurrency": "BRL",
+  "inputPaymentMethod": "PIX",
+  "inputAmount": "100",
+  "outputCurrency": "BRLA",
+  "outputPaymentMethod": "POLYGON",
+  "outputAmount": "99.749618",
+  "markupAmount": "0",
+  "markupCurrency": "",
+  "inputThirdParty": false,
+  "outputThirdParty": false,
+  "appliedFees": [
+    {
+      "type": "Markup Fee",
+      "description": "Total markup fees represented in the input currency.",
+      "amount": "0",
+      "currency": "BRL"
+    },
+    {
+      "type": "In Fee",
+      "description": "Fees due to input currency and input payment method.",
+      "amount": "0.2",
+      "currency": "BRL"
+    },
+    {
+      "type": "Conversion Fee",
+      "description": "Fees due to conversion from input currency to output currency.",
+      "amount": "0",
+      "currency": "BRL"
+    },
+    {
+      "type": "Out Fee",
+      "description": "Fees due to output currency and output payment method.",
+      "amount": "0.05",
+      "currency": "BRL"
+    },
+    {
+      "type": "Gas Fee",
+      "description": "Fees due to blockchain transaction costs.",
+      "amount": "0.000382",
+      "currency": "BRL"
+    }
+  ],
+  "basePrice": "1",
+  "pairName": "BRLBRLA"
+}
+
+With our quote in hand, we can move on to the next part!
+
+STEP 2 - Constructing the request to initiate the ticket creation
+Remember, each part of the ticket is modular, meaning it will adapt based on the inputs defined in your quote. Let’s build it step by step, and by the end, we’ll have the complete JSON ready to be sent!
+
+By default, the quoteToken field is always required. So, let's start by preparing it!
+
+{
+  "quoteToken": "eyJhdXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+}
+
+Input Currency - BRL
+In this case, since the input currency is BRL, no additional input is required!
+
+Send Method - PIX
+In this example, since this field is optional and there’s no additional data to provide, I'll leave it empty.
+
+But just as a reminder, this would be the field:
+
+additionalData
+
+Based on the fact that BRL FIAT RAILS is already registered, we would add the addionatal data here:
+
+{
+  "quoteToken": "eyJhdXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+  "ticketBrlPixInput": {
+    "additionalData": ""
+  }
+}
+
+Output Currency - BRLA (BLOCKCHAIN)
+warning
+You must already have the wallet registered in Beneficiary Wallet
+
+In this example, we have a wallet that is already registered as a beneficiary. Now, let's add its ID so it can receive the 100 Avenia.
+
+{
+  "quoteToken": "eyJhdXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+  "ticketBrlPixInput": {
+    "additionalData": ""
+  },
+  "ticketBlockchainOutput": {
+    "beneficiaryWalletId": "00000000-0000-0000-0000-000000000000"
+  }
+}
+
+Send Method - POLYGON
+In this case, since the send method is POLYGON, no additional input is required!
+
+Send request to create ticket!
+HTTP Post Request
+https://api.sandbox.avenia.io:10952/v2/account/tickets/
+
+JSON Body
+{
+  "quoteToken": "eyJhdXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+  "ticketBrlPixInput": {
+    "additionalData": ""
+  },
+  "ticketBlockchainOutput": {
+    "beneficiaryWalletId": "00000000-0000-0000-0000-000000000000"
+  }
+}
+
+cUrl Example
+curl -X POST "https://api.sandbox.avenia.io:10952/v2/account/tickets/" \
+-H "Content-Type: application/json" \
+-H "Authorization: Bearer eyJhdXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" \
+-d '{
+	"quoteToken": "eyJhdXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+	"ticketBrlPixInput": {
+		"additionalData": ""
+	},
+	"ticketBlockchainOutput": {
+		"beneficiaryWalletId": "00000000-0000-0000-0000-000000000000"
+	}
+}'
+
+JSON Response
+And as a response from the endpoint, we will receive the following data:
+
+{
+  "brCode": "00020126810014br.gov.bcb.pix01365c2c61a1-134b-4c34-958f-ea3122ac717f0219Avenia Ticket Payment52040000530398633306100.005802BR5917Avenia API Ltda6009Sao Paulo62290525qkb7MyGHKYU80DcB0JdbD7Ide63046F5B",
+  "expiration": "2025-03-11T16:06:42.638410717Z",
+  "id": "00000000-0000-0000-0000-000000000000"
+}
+
+
+And that's it! All that's left is to pay the QR code using the link provided in the endpoint's response, and the Avenia will be delivered to the specified beneficiary wallet.
+
+Conversion Between Blockchains
+Now, let's execute a blockchain-to-blockchain conversion, where the user will send BRLA on Polygon and receive BRLA on Celo.
+
+We'll go step by step, making sure you understand how to construct the ticket properly.
+
+Step 1 - Getting the Right Quote
+By calling the quote endpoint with the required information, you’ll obtain the following:
+
+HTTP Get Request
+https://api.sandbox.avenia.io:10952/v2/account/quote/fixed-rate
+
+Field	Type	Value	Description
+inputCurrency	string	BRLA	The currency being sent.
+inputPaymentMethod	string	POLYGON	The blockchain network from which the tokens will be sent.
+inputAmount	number	100	The amount of BRLA tokens to send.
+outputCurrency	string	BRLA	The currency the user wants to receive.
+outputPaymentMethod	string	CELO	The blockchain network where the tokens will be received.
+cUrl Example
+curl -X GET "https://api.sandbox.avenia.io:10952/v2/account/quote/fixed-rate" \
+-H "Content-Type: application/json" \
+-H "Authorization: Bearer eyJhdXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" \
+-G \
+--data-urlencode "inputCurrency=BRLA" \
+--data-urlencode "inputPaymentMethod=POLYGON" \
+--data-urlencode "inputAmount=100" \
+--data-urlencode "outputCurrency=BRLA" \
+--data-urlencode "outputPaymentMethod=CELO"
+
+JSON Response
+As a response, you will receive the following JSON:
+
+{
+  "quoteToken": "eyJhdXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+  "inputCurrency": "BRLA",
+  "inputPaymentMethod": "POLYGON",
+  "inputAmount": "100",
+  "outputCurrency": "BRLA",
+  "outputPaymentMethod": "CELO",
+  "outputAmount": "99.895198",
+  "markupAmount": "0",
+  "markupCurrency": "",
+  "blockchainSendMethod": "PERMIT",
+  "inputThirdParty": false,
+  "outputThirdParty": false,
+  "appliedFees": [
+    {
+      "type": "Markup Fee",
+      "description": "Total markup fees represented in the input currency.",
+      "amount": "0",
+      "currency": "BRLA"
+    },
+    {
+      "type": "In Fee",
+      "description": "Fees due to input currency and input payment method.",
+      "amount": "0.05",
+      "currency": "BRLA"
+    },
+    {
+      "type": "Conversion Fee",
+      "description": "Fees due to conversion from input currency to output currency.",
+      "amount": "0",
+      "currency": "BRLA"
+    },
+    {
+      "type": "Out Fee",
+      "description": "Fees due to output currency and output payment method.",
+      "amount": "0.05",
+      "currency": "BRLA"
+    },
+    {
+      "type": "Gas Fee",
+      "description": "Fees due to blockchain transaction costs.",
+      "amount": "0.004802",
+      "currency": "BRLA"
+    }
+  ],
+  "basePrice": "1",
+  "pairName": "BRLABRLA"
+}
+
+Step 2 - Constructing the Ticket Request
+Now that we have the quote, let's construct the request to initiate the ticket creation.
+
+Step 2.1 - Start with the quoteToken
+The quoteToken is always required, so let's include it first:
+
+{
+  "quoteToken": "eyJhdXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+}
+
+Step 2.2 - Input Currency - BRLA (BLOCKCHAIN)
+Since we are using BRLA on Polygon as the input, we need to provide the wallet address that will be sending the tokens.
+
+{
+  "quoteToken": "eyJhdXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+  "ticketBlockchainInput": {
+    "walletAddress": "0xXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+  }
+}
+
+Step 2.3 - Send Method - PERMIT or TRANSFER
+Now, depending on how the tokens will be sent, we need to add more details.
+
+If using PERMIT, we must include the signed permit data:
+
+{
+  "quoteToken": "eyJhdXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+  "ticketBlockchainInput": {
+    "walletAddress": "0xXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+  },
+  "ticketBlockchainInput": {
+    "walletAddress": "0xXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "permit": {
+      "r": "0xXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+      "s": "0xXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+      "v": 1,
+      "nonce": 1,
+      "deadline": 1
+    }
+  }
+}
+
+If using TRANSFER, there's nothing else to add—just send the tokens manually to your Business Account Wallet.
+
+Step 2.4 - Output Currency - BRLA (CELO)
+Now, since our output is BRLA on Celo, we must provide the beneficiary wallet ID where the tokens will be received.
+
+{
+  "quoteToken": "eyJhdXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+  "ticketBlockchainInput": {
+    "walletAddress": "0xXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+  },
+  "ticketBlockchainInput": {
+    "walletAddress": "0xXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "permit": {
+      "r": "0xXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+      "s": "0xXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+      "v": 1,
+      "nonce": 1,
+      "deadline": 1
+    }
+  },
+  "ticketBlockchainOutput": {
+    "beneficiaryWalletId": "00000000-0000-0000-0000-000000000000"
+  }
+}
+
+Step 3 - Sending the Ticket Request
+Now that we have all the required fields, we can send the request.
+
+HTTP Post Request
+https://api.sandbox.avenia.io:10952/v2/account/tickets/
+
+Final JSON to Send - body
+{
+  "quoteToken": "eyJhdXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+  "ticketBlockchainInput": {
+    "walletAddress": "0xXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+  },
+  "ticketBlockchainInput": {
+    "walletAddress": "0xXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "permit": {
+      "r": "0xXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+      "s": "0xXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+      "v": 1,
+      "nonce": 1,
+      "deadline": 1
+    }
+  },
+  "ticketBlockchainOutput": {
+    "beneficiaryWalletId": "00000000-0000-0000-0000-000000000000"
+  }
+}
+
+cUrl Example
+curl -X POST "https://api.sandbox.avenia.io:10952/v2/account/tickets/" \
+-H "Content-Type: application/json" \
+-H "Authorization: Bearer eyJhdXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" \
+-d '{
+	"quoteToken": "eyJhdXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+	"ticketBlockchainInput": {
+		"walletAddress": "0xXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+		"permit": {
+			"r": "0xXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+			"s": "0xXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+			"v": 1,
+			"nonce": 1,
+			"deadline": 1
+		}
+	},
+	"ticketBlockchainOutput": {
+		"beneficiaryWalletId": "00000000-0000-0000-0000-000000000000"
+	}
+}'
+
+Step 4 - Receiving the Response
+Upon success, the endpoint will return the following response:
+
+JSON Response
+{
+  "id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+  "expiration": "2025-03-11T16:06:42.638410717Z"
+}
+
+Step 5 - Completing the Transfer
+If using PERMIT, Avenia will automatically execute the transaction.
+
+If using TRANSFER, manually send the 100 BRLA to your Business Account Wallet before the expiration time.
+
+And that’s it!
+You’ve successfully created a blockchain-to-blockchain transaction, converting BRLA on Polygon to BRLA on Celo.
+
+Conclusion
+At this point, you should have a clear understanding of how to execute transactions using tickets.
+
+We covered:
+
+The structure of a ticket, including required and dynamic fields.
+How to construct requests based on your quote, whether for fiat or blockchain transactions.
+How to send the request, process different send methods, and finalize the transaction.
+The importance of the block system, allowing you to assemble operations in a modular way.
+Now, you're ready to seamlessly integrate ticket creation into your workflow! If you have any questions, feel free to reach out—we’re here to help.
+
+Previous
+Quote Guide

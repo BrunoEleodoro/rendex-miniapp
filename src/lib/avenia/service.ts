@@ -58,7 +58,23 @@ export class AveniaService {
     console.log(`[AveniaService] Getting user for KYC: ${userId}`);
     await connectMongoDB();
     
-    const user = await User.findById(userId);
+    let user;
+    
+    // Try to find by ObjectId first, then fall back to username/email
+    if (userId.match(/^[0-9a-fA-F]{24}$/)) {
+      // Valid ObjectId format
+      user = await User.findById(userId);
+    } else {
+      // Assume it's username or email
+      user = await User.findOne({
+        $or: [
+          { email: userId },
+          { farcasterUsername: userId },
+          { id: userId } // Custom ID field
+        ]
+      });
+    }
+    
     if (!user) {
       console.error(`[AveniaService] User not found: ${userId}`);
       throw new Error('User not found');
@@ -204,12 +220,12 @@ export class AveniaService {
     console.log(`[AveniaService] KYC webhook processed successfully for attempt: ${aveniaKycId}`);
   }
 
-  async createPixPayment(userId: string, outputAmount: number, subaccountId?: string): Promise<{
+  async createPixPayment(userId: string, outputAmount: number, subaccountId?: string, walletAddress?: string): Promise<{
     ticketId: string;
     brCode: string;
     expiration: string;
   }> {
-    console.log(`[AveniaService] Creating PIX payment for user: ${userId}, amount: ${outputAmount} BRLA${subaccountId ? ` (subaccount: ${subaccountId})` : ''}`);
+    console.log(`[AveniaService] Creating PIX payment for user: ${userId}, amount: ${outputAmount} BRLA${subaccountId ? ` (subaccount: ${subaccountId})` : ''}${walletAddress ? ` (external wallet: ${walletAddress})` : ''}`);
     const user = await this.getUserForKYC(userId);
     
     // Step 1: Get quote from Avenia with subaccount
@@ -218,12 +234,25 @@ export class AveniaService {
       throw new Error('No subaccount ID available for user');
     }
     console.log(`[AveniaService] Getting PIX to BRLA quote for user: ${user.email}, amount: ${outputAmount}, subaccount: ${userSubaccountId}`);
-    const quote = await this.client.getPixToBRLAQuote(outputAmount, userSubaccountId);
+    
+    // Determine output payment method based on whether we're sending to external wallet
+    const outputPaymentMethod = walletAddress ? 'POLYGON' : 'INTERNAL';
+    console.log(`[AveniaService] Using output payment method: ${outputPaymentMethod}${walletAddress ? ` (external: ${walletAddress})` : ' (internal)'}`);
+    
+    const quote = await this.client.getPixToBRLAQuote(outputAmount, userSubaccountId, outputPaymentMethod);
     console.log(`[AveniaService] Quote received - Will pay ${quote.inputAmount} BRL to get ${quote.outputAmount} BRLA`);
     
-    // Step 2: Create ticket
-    const beneficiaryWalletId = subaccountId || '00000000-0000-0000-0000-000000000000';
-    console.log(`[AveniaService] Creating Avenia ticket for user: ${userId}, beneficiary: ${beneficiaryWalletId}`);
+    // Step 2: Create ticket with external wallet support
+    let beneficiaryWalletId = '00000000-0000-0000-0000-000000000000'; // Default internal wallet
+    
+    if (walletAddress) {
+      // Get or create beneficiary wallet for external transfer
+      console.log(`[AveniaService] Getting or creating beneficiary wallet for external address: ${walletAddress}`);
+      beneficiaryWalletId = await this.getOrCreateBeneficiaryWallet(userSubaccountId, walletAddress);
+      console.log(`[AveniaService] Using beneficiary wallet ID: ${beneficiaryWalletId}`);
+    }
+    
+    console.log(`[AveniaService] Creating Avenia ticket for user: ${userId}, beneficiary: ${beneficiaryWalletId}${walletAddress ? ` (external: ${walletAddress})` : ' (internal)'}`);
     const ticket = await this.client.createTicket({
       quoteToken: quote.quoteToken,
       ticketBlockchainOutput: {
@@ -237,7 +266,7 @@ export class AveniaService {
     const transaction = new Transaction({
       userId: user._id,
       aveniaTicketId: ticket.id,
-      type: 'pix_to_brla',
+      type: walletAddress ? 'pix_to_external_wallet' : 'pix_to_brla',
       status: 'unpaid',
       inputCurrency: quote.inputCurrency,
       inputAmount: quote.inputAmount,
@@ -253,6 +282,7 @@ export class AveniaService {
       brCode: ticket.brCode,
       expiresAt: ticket.expiration ? new Date(ticket.expiration) : undefined,
       webhookReceived: false,
+      externalWalletAddress: walletAddress, // Store external wallet address
     });
     await transaction.save();
     console.log(`[AveniaService] Transaction record saved with ID: ${transaction._id}`);
@@ -363,14 +393,24 @@ export class AveniaService {
     return await this.client.getSubaccountBalances(subaccountId);
   }
 
-  async getPixToBRLAQuote(outputAmount: number, subaccountId: string): Promise<any> {
-    console.log(`[AveniaService] Getting PIX to BRLA quote for amount: ${outputAmount}, subaccount: ${subaccountId}`);
-    return await this.client.getPixToBRLAQuote(outputAmount, subaccountId);
+  async getPixToBRLAQuote(outputAmount: number, subaccountId: string, outputPaymentMethod: string = 'INTERNAL'): Promise<any> {
+    console.log(`[AveniaService] Getting PIX to BRLA quote for amount: ${outputAmount}, subaccount: ${subaccountId}, method: ${outputPaymentMethod}`);
+    return await this.client.getPixToBRLAQuote(outputAmount, subaccountId, outputPaymentMethod);
   }
 
   async createPixTicketForUser(subaccountId: string, quoteToken: string, walletAddress?: string): Promise<any> {
     console.log(`[AveniaService] Creating PIX ticket for subaccount: ${subaccountId}, wallet: ${walletAddress || 'internal'}`);
-    return await this.client.createPixTicket(subaccountId, quoteToken, walletAddress);
+    
+    let beneficiaryWalletId = '00000000-0000-0000-0000-000000000000'; // Default internal wallet
+    
+    if (walletAddress) {
+      // Get or create beneficiary wallet for external transfer
+      console.log(`[AveniaService] Getting or creating beneficiary wallet for external address: ${walletAddress}`);
+      beneficiaryWalletId = await this.getOrCreateBeneficiaryWallet(subaccountId, walletAddress);
+      console.log(`[AveniaService] Using beneficiary wallet ID: ${beneficiaryWalletId}`);
+    }
+    
+    return await this.client.createPixTicket(subaccountId, quoteToken, beneficiaryWalletId);
   }
 
   async createBeneficiaryWallet(subaccountId: string, walletData: {
@@ -382,6 +422,37 @@ export class AveniaService {
   }): Promise<{ id: string }> {
     console.log(`[AveniaService] Creating beneficiary wallet for subaccount: ${subaccountId}`);
     return await this.client.createBeneficiaryWallet(subaccountId, walletData);
+  }
+
+  async getOrCreateBeneficiaryWallet(subaccountId: string, walletAddress: string): Promise<string> {
+    console.log(`[AveniaService] Getting or creating beneficiary wallet for: ${walletAddress}`);
+    
+    try {
+      // First, check if the wallet already exists
+      const existingWallets = await this.client.getBeneficiaryWallets(subaccountId, walletAddress);
+      
+      if (existingWallets.wallets.length > 0) {
+        console.log(`[AveniaService] Found existing beneficiary wallet: ${existingWallets.wallets[0].id}`);
+        return existingWallets.wallets[0].id;
+      }
+      
+      // If not found, create a new one
+      console.log(`[AveniaService] No existing wallet found, creating new beneficiary wallet`);
+      const walletResult = await this.client.createBeneficiaryWallet(subaccountId, {
+        alias: `External Wallet ${walletAddress.slice(0, 10)}...`,
+        description: `External wallet for PIX deposits: ${walletAddress}`,
+        walletAddress,
+        walletChain: 'POLYGON', // Force POLYGON network for all external wallets
+        walletMemo: 'Auto-created for PIX deposit',
+      });
+      
+      console.log(`[AveniaService] New beneficiary wallet created: ${walletResult.id}`);
+      return walletResult.id;
+      
+    } catch (error: any) {
+      console.error(`[AveniaService] Error managing beneficiary wallet:`, error.message);
+      throw new Error(`Failed to get or create beneficiary wallet: ${error.message}`);
+    }
   }
 
   async getExternalTransferQuote(

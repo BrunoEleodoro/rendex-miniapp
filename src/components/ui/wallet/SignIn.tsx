@@ -102,11 +102,11 @@ export function SignIn() {
         </Button>
       )}
 
-      {/* Session Information */}
-      {authenticatedUser && (
+      {/* Session Information - Only show in debug mode */}
+      {process.env.NODE_ENV === 'development' && authenticatedUser && (
         <div className="my-2 p-2 text-xs overflow-x-scroll bg-gray-100 dark:bg-gray-900 rounded-lg font-mono">
           <div className="font-semibold text-gray-500 dark:text-gray-300 mb-1">
-            Authenticated User
+            Authenticated User (Debug)
           </div>
           <div className="whitespace-pre text-gray-700 dark:text-gray-200">
             {JSON.stringify(authenticatedUser, null, 2)}

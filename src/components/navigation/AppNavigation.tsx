@@ -28,7 +28,7 @@ const navigationItems: NavigationItem[] = [
   }
 ];
 
-const flowPages = ["/welcome", "/analysis", "/ready", "/notifications"];
+const flowPages = ["/welcome", "/analysis", "/ready", "/notifications", "/dashboard"];
 
 export function AppNavigation() {
   const router = useRouter();
@@ -39,24 +39,24 @@ export function AppNavigation() {
     return null;
   }
 
-  // Show back button on secondary pages
-  const isSecondaryPage = !["/dashboard", "/invest", "/avenia"].includes(pathname);
+  // // Show back button on secondary pages
+  // const isSecondaryPage = !["/dashboard", "/invest", "/avenia"].includes(pathname);
 
-  if (isSecondaryPage) {
-    return (
-      <div className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 p-4">
-        <Button
-          onClick={() => router.back()}
-          variant="ghost"
-          size="sm"
-          className="flex items-center gap-2"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back
-        </Button>
-      </div>
-    );
-  }
+  // if (isSecondaryPage) {
+  //   return (
+  //     <div className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 p-4">
+  //       <Button
+  //         onClick={() => router.back()}
+  //         variant="ghost"
+  //         size="sm"
+  //         className="flex items-center gap-2"
+  //       >
+  //         <ArrowLeft className="w-4 h-4" />
+  //         Back
+  //       </Button>
+  //     </div>
+  //   );
+  // }
 
   // Show bottom navigation on main pages
   return (

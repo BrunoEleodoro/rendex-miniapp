@@ -1,0 +1,137 @@
+Introduction
+Let's effectively learn what's needed to use API Keys in practice. We'll use Python as it's simple and easy to demonstrate the necessary implementation.
+
+Essential Request Components
+API Key - Your previously registered API Key
+Timestamp - Current timestamp
+Base Endpoint - The API main domain (e.g. https://api.sandbox.avenia.io:10952)
+HTTP Method - The verb defining the action (GET, POST, PUT, PATCH, DELETE)
+Request URI - The specific path after the base endpoint (e.g. /v2/auth/api-keys)
+Request Body (when applicable) - Data to be sent in JSON format
+Initial Setup
+First, we'll import the necessary libraries for cryptography and making requests:
+
+import time
+import base64
+import requests
+
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import padding
+
+api_key = "dc96d0f8-ac73-4abe-ade3-c6d14e3e22fb"
+endpoint = "https://api.sandbox.avenia.io:10952/v2/account/account-info"
+method = "GET"
+request_uri = "/v2/account/account-info"
+body = ""
+timestamp = str(int(time.time() * 1000))
+
+string_to_sign = timestamp + method + request_uri # + body if the request contains a body
+
+info
+string_to_sign is what the signature will actually consist of. Remember that if the request you're making has a body, this field must also be included.
+
+request_uri If your request has parameters or the URI changes, it must also be included in the request_uri. For example:
+
+/v2/account/account-info?foo=bar
+
+Loading the Private Key
+Next, we need to load the private_key.pem file that should be in the same directory as the Python file, and serialize it as an actual private key using our cryptography library:
+
+with open("private_key.pem", "rb") as key_file:
+    private_key = serialization.load_pem_private_key(
+        key_file.read(),
+        password=None,
+    )
+
+Creating the Request Signature
+Now we'll build the request signature and return it as base64, using our private key:
+
+signature = private_key.sign(
+    string_to_sign.encode("utf-8"),
+    padding.PKCS1v15(),
+    hashes.SHA256()
+)
+signature_base64 = base64.b64encode(signature).decode("utf-8")
+
+Building the Request
+Finally, we'll construct the request headers which consist of:
+
+X-API-KEY - Your previously registered API Key
+X-API-Timestamp - Current timestamp
+X-API-Signature - The signature we created earlier in base64
+print("Headers:")
+print("X-API-Key:", api_key)
+print("X-API-Timestamp:", timestamp)
+print("X-API-Signature:", signature_base64)
+
+headers = {
+    "X-API-Key": api_key,
+    "X-API-Timestamp": timestamp,
+    "X-API-Signature": signature_base64,
+}
+
+response = requests.get(endpoint, headers=headers)
+
+print("Status:", response.status_code)
+print("Response:", response.text)
+
+Expected Output
+When running the complete code, you should see something like this:
+
+Headers:
+X-API-Key: dc96d0f8-ac73-4abe-ade3-c6d14e3e22fb
+X-API-Timestamp: 1743107780606
+X-API-Signature: eEnHoz2CWyMqFA/rx518ZF+y...
+
+Status: 200
+Response: {"id":"05505dde-c2e4-47c5-bd5c-071b4c4bb6a4" ... "createdAt":"2025-02-07T19:54:17.727744Z"}
+
+Complete Code
+Here's the complete Python code for reference:
+
+import time
+import base64
+import requests
+
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import padding
+
+# Configuration
+api_key = "dc96d0f8-ac73-4abe-ade3-c6d14e3e22fb"
+endpoint = "https://api.sandbox.avenia.io:10952/v2/account/account-info"
+method = "GET"
+request_uri = "/v2/account/account-info"
+body = ""
+timestamp = str(int(time.time() * 1000))
+
+# Create string to sign
+string_to_sign = timestamp + method + request_uri # + body if the request contains a body
+
+# Load private key
+with open("private_key.pem", "rb") as key_file:
+    private_key = serialization.load_pem_private_key(
+        key_file.read(),
+        password=None,
+    )
+
+# Generate signature
+signature = private_key.sign(
+    string_to_sign.encode("utf-8"),
+    padding.PKCS1v15(),
+    hashes.SHA256()
+)
+signature_base64 = base64.b64encode(signature).decode("utf-8")
+
+# Prepare headers
+headers = {
+    "X-API-Key": api_key,
+    "X-API-Timestamp": timestamp,
+    "X-API-Signature": signature_base64,
+}
+
+# Make the request
+response = requests.get(endpoint, headers=headers)
+
+# Print results
+print("Status:", response.status_code)
+print("Response:", response.text)
