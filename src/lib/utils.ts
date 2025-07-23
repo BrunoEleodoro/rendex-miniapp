@@ -57,6 +57,13 @@ export async function getFarcasterDomainManifest(): Promise<Manifest> {
       splashImageUrl: APP_SPLASH_URL,
       splashBackgroundColor: APP_SPLASH_BACKGROUND_COLOR,
       webhookUrl: APP_WEBHOOK_URL,
+      requiredChains: [
+        'eip155:137' // Polygon Mainnet
+      ],
+      requiredCapabilities: [
+        'wallet.getEthereumProvider',
+        'actions.signIn'
+      ]
     },
   };
 }

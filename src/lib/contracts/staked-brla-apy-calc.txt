@@ -1,0 +1,407 @@
+// StakedBRLA APY Calculator - JavaScript Implementation
+// Supports both ethers.js and wagmi
+
+import { ethers } from 'ethers';
+import { useContractRead, useContractReads } from 'wagmi';
+
+// ABI fragments for the contracts
+const STAKED_BRLA_ABI = [
+  "function totalSupply() view returns (uint256)",
+  "function brla() view returns (address)",
+  "function _currentPrice() view returns (int128)"
+];
+
+const ERC20_ABI = [
+  "function balanceOf(address) view returns (uint256)"
+];
+
+// ABDK Math 64x64 helper functions (simplified JavaScript implementation)
+class ABDKMath64x64 {
+  static DECIMALS = 64;
+  static ONE = BigInt(1) << BigInt(64); // 2^64
+
+  static fromUInt(x) {
+    return BigInt(x) << BigInt(64);
+  }
+
+  static toUInt(x) {
+    return Number(x >> BigInt(64));
+  }
+
+  static divu(x, y) {
+    if (y === 0n) throw new Error("Division by zero");
+    return (BigInt(x) << BigInt(64)) / BigInt(y);
+  }
+
+  static mulu(x, y) {
+    return (BigInt(x) * BigInt(y)) >> BigInt(64);
+  }
+
+  static sub(x, y) {
+    return BigInt(x) - BigInt(y);
+  }
+
+  static div(x, y) {
+    if (y === 0n) throw new Error("Division by zero");
+    return (BigInt(x) << BigInt(64)) / BigInt(y);
+  }
+
+  static mul(x, y) {
+    return (BigInt(x) * BigInt(y)) >> BigInt(64);
+  }
+}
+
+// =============================================================================
+// ETHERS.JS IMPLEMENTATION
+// =============================================================================
+
+export class StBRLAAPYCalculator {
+  constructor(stakedBRLAAddress, provider) {
+    this.stakedBRLAAddress = stakedBRLAAddress;
+    this.provider = provider;
+    this.stakedBRLAContract = new ethers.Contract(stakedBRLAAddress, STAKED_BRLA_ABI, provider);
+    this.snapshots = new Map(); // Store price snapshots locally
+  }
+
+  /**
+   * Get current price of stBRLA in terms of BRLA
+   */
+  async getCurrentPrice() {
+    try {
+      const [totalSupply, brlaAddress] = await Promise.all([
+        this.stakedBRLAContract.totalSupply(),
+        this.stakedBRLAContract.brla()
+      ]);
+
+      if (totalSupply.isZero()) {
+        return ABDKMath64x64.fromUInt(1);
+      }
+
+      const brlaContract = new ethers.Contract(brlaAddress, ERC20_ABI, this.provider);
+      const brlaBalance = await brlaContract.balanceOf(this.stakedBRLAAddress);
+
+      return ABDKMath64x64.divu(brlaBalance.toString(), totalSupply.toString());
+    } catch (error) {
+      console.error('Error getting current price:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Take a snapshot of current price
+   */
+  async takeSnapshot(label = null) {
+    const timestamp = Math.floor(Date.now() / 1000);
+    const price = await this.getCurrentPrice();
+    
+    const snapshotId = label || `snapshot_${timestamp}`;
+    this.snapshots.set(snapshotId, {
+      timestamp,
+      price,
+      blockNumber: await this.provider.getBlockNumber()
+    });
+
+    return snapshotId;
+  }
+
+  /**
+   * Calculate APY between two snapshots
+   */
+  calculateAPY(startSnapshotId, endSnapshotId) {
+    const startSnapshot = this.snapshots.get(startSnapshotId);
+    const endSnapshot = this.snapshots.get(endSnapshotId);
+
+    if (!startSnapshot || !endSnapshot) {
+      throw new Error('Invalid snapshot IDs');
+    }
+
+    const timeDiff = endSnapshot.timestamp - startSnapshot.timestamp;
+    if (timeDiff <= 0) {
+      throw new Error('Invalid time difference');
+    }
+
+    const SECONDS_PER_YEAR = 365 * 24 * 60 * 60;
+
+    // Calculate return rate: (endPrice - startPrice) / startPrice
+    const priceDiff = ABDKMath64x64.sub(endSnapshot.price, startSnapshot.price);
+    const returnRate = ABDKMath64x64.div(priceDiff, startSnapshot.price);
+
+    let annualizedReturn;
+    if (timeDiff >= SECONDS_PER_YEAR) {
+      // For periods >= 1 year, use actual return rate
+      annualizedReturn = returnRate;
+    } else {
+      // For shorter periods, scale to annual
+      const scalingFactor = ABDKMath64x64.divu(SECONDS_PER_YEAR, timeDiff);
+      annualizedReturn = ABDKMath64x64.mul(returnRate, scalingFactor);
+    }
+
+    // Convert to percentage (multiply by 10000 for basis points)
+    const apyBasisPoints = ABDKMath64x64.toUInt(
+      ABDKMath64x64.mul(annualizedReturn, ABDKMath64x64.fromUInt(10000))
+    );
+
+    return {
+      apyPercent: apyBasisPoints / 100, // Convert basis points to percentage
+      apyBasisPoints,
+      timePeriodDays: timeDiff / (24 * 60 * 60),
+      startPrice: ABDKMath64x64.toUInt(startSnapshot.price),
+      endPrice: ABDKMath64x64.toUInt(endSnapshot.price)
+    };
+  }
+
+  /**
+   * Calculate APY from a snapshot to current time
+   */
+  async calculateAPYFromSnapshot(snapshotId) {
+    const snapshot = this.snapshots.get(snapshotId);
+    if (!snapshot) {
+      throw new Error('Invalid snapshot ID');
+    }
+
+    const currentTimestamp = Math.floor(Date.now() / 1000);
+    const currentPrice = await this.getCurrentPrice();
+
+    const timeDiff = currentTimestamp - snapshot.timestamp;
+    if (timeDiff <= 0) {
+      throw new Error('Invalid time difference');
+    }
+
+    const SECONDS_PER_YEAR = 365 * 24 * 60 * 60;
+    const priceDiff = ABDKMath64x64.sub(currentPrice, snapshot.price);
+    const returnRate = ABDKMath64x64.div(priceDiff, snapshot.price);
+
+    let annualizedReturn;
+    if (timeDiff >= SECONDS_PER_YEAR) {
+      annualizedReturn = returnRate;
+    } else {
+      const scalingFactor = ABDKMath64x64.divu(SECONDS_PER_YEAR, timeDiff);
+      annualizedReturn = ABDKMath64x64.mul(returnRate, scalingFactor);
+    }
+
+    const apyBasisPoints = ABDKMath64x64.toUInt(
+      ABDKMath64x64.mul(annualizedReturn, ABDKMath64x64.fromUInt(10000))
+    );
+
+    return {
+      apyPercent: apyBasisPoints / 100,
+      apyBasisPoints,
+      timePeriodDays: timeDiff / (24 * 60 * 60),
+      startPrice: ABDKMath64x64.toUInt(snapshot.price),
+      currentPrice: ABDKMath64x64.toUInt(currentPrice)
+    };
+  }
+
+  /**
+   * Get all snapshots
+   */
+  getSnapshots() {
+    return Array.from(this.snapshots.entries()).map(([id, data]) => ({
+      id,
+      ...data,
+      priceFormatted: ABDKMath64x64.toUInt(data.price) / Math.pow(10, 18) // Assuming 18 decimals
+    }));
+  }
+
+  /**
+   * Estimate APY based on recent reward distribution
+   */
+  static estimateAPYFromReward(rewardAmount, totalStaked, distributionFrequencyPerYear = 12) {
+    if (totalStaked === 0) {
+      throw new Error('No staked amount');
+    }
+
+    const yieldRate = ABDKMath64x64.divu(rewardAmount, totalStaked);
+    const annualizedYield = ABDKMath64x64.mul(
+      yieldRate, 
+      ABDKMath64x64.fromUInt(distributionFrequencyPerYear)
+    );
+
+    const apyBasisPoints = ABDKMath64x64.toUInt(
+      ABDKMath64x64.mul(annualizedYield, ABDKMath64x64.fromUInt(10000))
+    );
+
+    return {
+      apyPercent: apyBasisPoints / 100,
+      apyBasisPoints,
+      assumedDistributionsPerYear: distributionFrequencyPerYear
+    };
+  }
+}
+
+// =============================================================================
+// WAGMI HOOKS IMPLEMENTATION
+// =============================================================================
+
+/**
+ * Hook to get current stBRLA price
+ */
+export function useStBRLAPrice(stakedBRLAAddress) {
+  const { data: contractData } = useContractReads({
+    contracts: [
+      {
+        address: stakedBRLAAddress,
+        abi: STAKED_BRLA_ABI,
+        functionName: 'totalSupply',
+      },
+      {
+        address: stakedBRLAAddress,
+        abi: STAKED_BRLA_ABI,
+        functionName: 'brla',
+      },
+    ],
+  });
+
+  const { data: brlaBalance } = useContractRead({
+    address: contractData?.[1]?.result,
+    abi: ERC20_ABI,
+    functionName: 'balanceOf',
+    args: [stakedBRLAAddress],
+    enabled: !!contractData?.[1]?.result,
+  });
+
+  const price = React.useMemo(() => {
+    if (!contractData || !brlaBalance) return null;
+
+    const totalSupply = contractData[0]?.result;
+    if (!totalSupply || totalSupply.isZero()) {
+      return ABDKMath64x64.fromUInt(1);
+    }
+
+    return ABDKMath64x64.divu(brlaBalance.toString(), totalSupply.toString());
+  }, [contractData, brlaBalance]);
+
+  return {
+    price,
+    totalSupply: contractData?.[0]?.result,
+    brlaBalance,
+    brlaAddress: contractData?.[1]?.result,
+  };
+}
+
+/**
+ * Hook for APY calculation with snapshot management
+ */
+export function useStBRLAAPY(stakedBRLAAddress) {
+  const [snapshots, setSnapshots] = React.useState(new Map());
+  const { price } = useStBRLAPrice(stakedBRLAAddress);
+
+  const takeSnapshot = React.useCallback((label = null) => {
+    if (!price) return null;
+
+    const timestamp = Math.floor(Date.now() / 1000);
+    const snapshotId = label || `snapshot_${timestamp}`;
+    
+    setSnapshots(prev => new Map(prev).set(snapshotId, {
+      timestamp,
+      price,
+    }));
+
+    return snapshotId;
+  }, [price]);
+
+  const calculateAPY = React.useCallback((startSnapshotId, endSnapshotId) => {
+    const startSnapshot = snapshots.get(startSnapshotId);
+    const endSnapshot = snapshots.get(endSnapshotId);
+
+    if (!startSnapshot || !endSnapshot) {
+      throw new Error('Invalid snapshot IDs');
+    }
+
+    const timeDiff = endSnapshot.timestamp - startSnapshot.timestamp;
+    if (timeDiff <= 0) {
+      throw new Error('Invalid time difference');
+    }
+
+    const SECONDS_PER_YEAR = 365 * 24 * 60 * 60;
+    const priceDiff = ABDKMath64x64.sub(endSnapshot.price, startSnapshot.price);
+    const returnRate = ABDKMath64x64.div(priceDiff, startSnapshot.price);
+
+    let annualizedReturn;
+    if (timeDiff >= SECONDS_PER_YEAR) {
+      annualizedReturn = returnRate;
+    } else {
+      const scalingFactor = ABDKMath64x64.divu(SECONDS_PER_YEAR, timeDiff);
+      annualizedReturn = ABDKMath64x64.mul(returnRate, scalingFactor);
+    }
+
+    const apyBasisPoints = ABDKMath64x64.toUInt(
+      ABDKMath64x64.mul(annualizedReturn, ABDKMath64x64.fromUInt(10000))
+    );
+
+    return {
+      apyPercent: apyBasisPoints / 100,
+      apyBasisPoints,
+      timePeriodDays: timeDiff / (24 * 60 * 60),
+    };
+  }, [snapshots]);
+
+  return {
+    currentPrice: price,
+    snapshots: Array.from(snapshots.entries()),
+    takeSnapshot,
+    calculateAPY,
+  };
+}
+
+// =============================================================================
+// USAGE EXAMPLES
+// =============================================================================
+
+/* 
+// ETHERS.JS USAGE EXAMPLE
+async function exampleEthers() {
+  const provider = new ethers.providers.JsonRpcProvider('YOUR_RPC_URL');
+  const calculator = new StBRLAAPYCalculator('STAKED_BRLA_ADDRESS', provider);
+
+  // Take initial snapshot
+  const snapshot1 = await calculator.takeSnapshot('initial');
+  console.log('Snapshot 1 taken:', snapshot1);
+
+  // Wait some time (in real app, this would be days/weeks)
+  // ... rewards get distributed ...
+
+  // Take another snapshot
+  const snapshot2 = await calculator.takeSnapshot('after_rewards');
+
+  // Calculate APY
+  const apy = calculator.calculateAPY('initial', 'after_rewards');
+  console.log(`APY: ${apy.apyPercent.toFixed(2)}%`);
+  console.log(`Time period: ${apy.timePeriodDays.toFixed(1)} days`);
+}
+
+// WAGMI USAGE EXAMPLE (React Component)
+function StBRLADashboard() {
+  const { currentPrice, snapshots, takeSnapshot, calculateAPY } = useStBRLAAPY('STAKED_BRLA_ADDRESS');
+
+  const handleTakeSnapshot = () => {
+    const snapshotId = takeSnapshot();
+    console.log('Snapshot taken:', snapshotId);
+  };
+
+  const handleCalculateAPY = () => {
+    if (snapshots.length >= 2) {
+      const apy = calculateAPY(snapshots[0][0], snapshots[snapshots.length - 1][0]);
+      console.log(`APY: ${apy.apyPercent.toFixed(2)}%`);
+    }
+  };
+
+  return (
+    <div>
+      <p>Current Price: {currentPrice ? ABDKMath64x64.toUInt(currentPrice) : 'Loading...'}</p>
+      <button onClick={handleTakeSnapshot}>Take Snapshot</button>
+      <button onClick={handleCalculateAPY} disabled={snapshots.length < 2}>
+        Calculate APY
+      </button>
+      <div>
+        <h3>Snapshots ({snapshots.length})</h3>
+        {snapshots.map(([id, data]) => (
+          <div key={id}>
+            {id}: {new Date(data.timestamp * 1000).toLocaleString()}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+*/

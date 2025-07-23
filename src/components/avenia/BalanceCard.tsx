@@ -2,8 +2,10 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Button } from '../ui/Button';
-import { useAvenia } from '../../hooks/useAvenia';
+// import { useAvenia } from '../../hooks/useAvenia'; // Removed - not using Avenia API anymore
 import { useRealTimeUpdates } from '../../hooks/useRealTimeUpdates';
+import { useBRLABalance, useStBRLABalance } from '../../lib/contracts';
+import { useAccount } from 'wagmi';
 
 interface BalanceCardProps {
   userId: string;
@@ -23,10 +25,15 @@ export const BalanceCard = ({ userId, onPixPayment, onConvert, onBalanceUpdate }
   const [balances, setBalances] = useState<Balances | null>(null);
   const [realTimeMessage, setRealTimeMessage] = useState<string>('');
   const [refreshing, setRefreshing] = useState(false);
-  const { getBalances, loading } = useAvenia();
+  // const { getBalances, loading } = useAvenia(); // Removed - not using Avenia API anymore
+
+  // Blockchain balance hooks
+  const { isConnected } = useAccount();
+  const { balance: brlaBalance, isLoading: brlaLoading, refetch: refetchBRLA } = useBRLABalance();
+  const { balance: stBrlaBalance, isLoading: stBrlaLoading, refetch: refetchStBRLA } = useStBRLABalance();
 
   // Set up real-time updates for balance changes
-  const { isConnected, connectionError } = useRealTimeUpdates({
+  const { isConnected: isRealTimeConnected, connectionError } = useRealTimeUpdates({
     userId,
     onPaymentUpdate: (update) => {
       console.log(`[BalanceCard] Real-time payment update received:`, update);
@@ -49,20 +56,27 @@ export const BalanceCard = ({ userId, onPixPayment, onConvert, onBalanceUpdate }
   });
 
   const loadBalances = useCallback(async () => {
-    console.log(`[BalanceCard] Loading balances for user: ${userId}`);
+    console.log(`[BalanceCard] Loading blockchain balances for user: ${userId}`);
     setRefreshing(true);
     
     try {
-      const userBalances = await getBalances(userId);
-      setBalances(userBalances);
-      onBalanceUpdate?.(userBalances);
-      console.log(`[BalanceCard] Balances loaded successfully for user: ${userId}`, userBalances);
+      // Use only blockchain data - no more Avenia API calls
+      const blockchainBalances = {
+        BRLA: brlaBalance || '0',
+        USDC: '0', // These could be added later with ERC20 hooks if needed
+        USDT: '0',
+        USDM: '0'
+      };
+      
+      setBalances(blockchainBalances);
+      onBalanceUpdate?.(blockchainBalances);
+      console.log(`[BalanceCard] Blockchain balances loaded successfully for user: ${userId}`, blockchainBalances);
     } catch (error) {
-      console.error(`[BalanceCard] Failed to load balances for user ${userId}:`, error);
+      console.error(`[BalanceCard] Failed to load blockchain balances for user ${userId}:`, error);
     } finally {
       setRefreshing(false);
     }
-  }, [userId, getBalances, onBalanceUpdate]);
+  }, [userId, brlaBalance, onBalanceUpdate]);
 
   useEffect(() => {
     loadBalances();
@@ -113,13 +127,17 @@ export const BalanceCard = ({ userId, onPixPayment, onConvert, onBalanceUpdate }
       <div className="flex justify-between items-start mb-4">
         <h2 className="text-lg font-semibold">Your Portfolio</h2>
         <Button
-          onClick={loadBalances}
-          disabled={loading || refreshing}
+          onClick={() => {
+            refetchBRLA();
+            refetchStBRLA();
+            loadBalances();
+          }}
+          disabled={refreshing || brlaLoading || stBrlaLoading}
           variant="outline"
           size="sm"
           className="text-white border-white hover:bg-white hover:text-blue-600"
         >
-          {(loading || refreshing) ? '↻' : '⟳'}
+          {(refreshing || brlaLoading || stBrlaLoading) ? '↻' : '⟳'}
         </Button>
       </div>
 
@@ -135,11 +153,19 @@ export const BalanceCard = ({ userId, onPixPayment, onConvert, onBalanceUpdate }
         </div>
       )}
 
-      <div className="flex items-center gap-2 mb-4">
-        <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-400' : 'bg-red-400'}`}></div>
-        <span className="text-sm opacity-80">
-          {isConnected ? 'Real-time updates connected' : 'Real-time updates disconnected'}
-        </span>
+      <div className="flex items-center justify-between gap-2 mb-4">
+        <div className="flex items-center gap-2">
+          <div className={`w-2 h-2 rounded-full ${isRealTimeConnected ? 'bg-green-400' : 'bg-red-400'}`}></div>
+          <span className="text-xs opacity-80">
+            {isRealTimeConnected ? 'Real-time updates connected' : 'Real-time updates disconnected'}
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-blue-400' : 'bg-gray-400'}`}></div>
+          <span className="text-xs opacity-80">
+            {isConnected ? 'Wallet connected' : 'Wallet disconnected'}
+          </span>
+        </div>
       </div>
 
       <div className="mb-6">

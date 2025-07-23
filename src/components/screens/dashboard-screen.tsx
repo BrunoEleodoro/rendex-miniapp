@@ -7,8 +7,11 @@ import { User, TrendingUp, Settings } from "lucide-react"
 import { motion } from "framer-motion"
 import { BalanceCard } from "~/components/avenia/BalanceCard"
 import { PIXPaymentModal } from "~/components/avenia/PIXPaymentModal"
+import { StakingModal } from "~/components/staking/StakingModal"
+import { NetworkIndicator } from "~/components/ui/NetworkIndicator"
 import { sdk } from "@farcaster/miniapp-sdk"
 import { useAccount } from "wagmi"
+import { useStBRLABalance, useStBRLAAPY, useBRLABalance } from "~/lib/contracts"
 
 interface DashboardProps {
   onInvest?: () => void
@@ -33,11 +36,21 @@ interface Balances {
 export function DashboardScreen({ onInvest, onWithdraw }: DashboardProps = {}) {
   const router = useRouter()
   const [user, setUser] = useState<User | null>(null)
-  const [balances, setBalances] = useState<Balances | null>(null)
   const [showPixModal, setShowPixModal] = useState(false)
+  const [showStakingModal, setShowStakingModal] = useState(false)
+  // Removed balances state - now using direct blockchain hooks
   
   // Get connected wallet address
   const { address: connectedWalletAddress } = useAccount()
+  
+  // Get stBRLA balance for circular progress display
+  const { balance: stBrlaBalance, isLoading: stBrlaLoading } = useStBRLABalance()
+  
+  // Get BRLA balance 
+  const { balance: brlaBalance, isLoading: brlaLoading } = useBRLABalance()
+  
+  // Get APY data for display
+  const { currentAPY, isLoading: apyLoading } = useStBRLAAPY()
   
   // Initialize the app and check user status
   useEffect(() => {
@@ -116,6 +129,17 @@ export function DashboardScreen({ onInvest, onWithdraw }: DashboardProps = {}) {
     }).format(num);
   };
 
+  const formatStakedBalance = () => {
+    if (stBrlaLoading) return 'Loading...';
+    if (!stBrlaBalance || stBrlaBalance === '0') return 'R$ 0,00';
+    
+    const num = parseFloat(stBrlaBalance) || 0;
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    }).format(num);
+  };
+
   return (
     <motion.div 
       className="w-full bg-gradient-to-br from-blue-500 to-blue-600 min-h-screen text-white relative overflow-hidden bg-[url('/images/cloud-bg.png')] bg-cover bg-center"
@@ -187,8 +211,8 @@ export function DashboardScreen({ onInvest, onWithdraw }: DashboardProps = {}) {
         animate={{ x: 0, opacity: 1 }}
         transition={{ delay: 0.4, duration: 0.6 }}
       >
-        <h1 className="text-2xl font-light">Balance</h1>
-        <p className="text-sm opacity-80">Total</p>
+        <h1 className="text-2xl font-light">Staked Balance</h1>
+        <p className="text-sm opacity-80">stBRLA Holdings</p>
         
         {/* Currency Toggle */}
         <div className="flex justify-end mt-2">
@@ -237,7 +261,7 @@ export function DashboardScreen({ onInvest, onWithdraw }: DashboardProps = {}) {
                 animate={{ scale: 1 }}
                 transition={{ delay: 1.4, duration: 0.5, type: "spring" }}
               >
-                {balances ? formatBalance(balances.BRLA) : 'R$ 0,00'}
+{formatStakedBalance()}
               </motion.div>
               <motion.div 
                 className="text-green-500 font-semibold text-lg"
@@ -245,7 +269,7 @@ export function DashboardScreen({ onInvest, onWithdraw }: DashboardProps = {}) {
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 1.6, duration: 0.5 }}
               >
-                +3,5%
+                {apyLoading ? 'Loading...' : `+${currentAPY.toFixed(1)}% APY`}
               </motion.div>
               
               {/* Streak */}
@@ -268,6 +292,16 @@ export function DashboardScreen({ onInvest, onWithdraw }: DashboardProps = {}) {
         </div>
       </motion.div>
 
+      {/* Network Indicator */}
+      <motion.div
+        className="px-4 mt-6 max-w-sm mx-auto flex justify-center"
+        initial={{ y: 30, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 1.8, duration: 0.6 }}
+      >
+        <NetworkIndicator />
+      </motion.div>
+
       {/* Action Buttons */}
       <motion.div 
         className="px-4 mt-8 space-y-4 max-w-sm mx-auto"
@@ -282,6 +316,16 @@ export function DashboardScreen({ onInvest, onWithdraw }: DashboardProps = {}) {
             className="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-2xl font-semibold text-lg shadow-lg transition-colors"
           >
             PIX INVEST
+          </Button>
+        </motion.div>
+
+        {/* Stake BRLA Button */}
+        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+          <Button
+            onClick={() => setShowStakingModal(true)}
+            className="w-full bg-green-600 hover:bg-green-700 text-white py-4 rounded-2xl font-semibold text-lg shadow-lg transition-colors"
+          >
+            🔒 Stake BRLA
           </Button>
         </motion.div>
 
@@ -342,19 +386,7 @@ export function DashboardScreen({ onInvest, onWithdraw }: DashboardProps = {}) {
         }}
       />
 
-      {/* Hidden BalanceCard for data fetching */}
-      {user && (
-        <div className="hidden">
-          <BalanceCard
-            userId={user.subaccountId || user.id}
-            onPixPayment={() => setShowPixModal(true)}
-            onConvert={(currency) => {
-              console.log(`[DashboardScreen] Starting ${currency} conversion`);
-            }}
-            onBalanceUpdate={(newBalances) => setBalances(newBalances)}
-          />
-        </div>
-      )}
+      {/* Note: BalanceCard removed - now using direct blockchain hooks */}
 
       {/* PIX Payment Modal */}
       {showPixModal && user && (
@@ -370,6 +402,12 @@ export function DashboardScreen({ onInvest, onWithdraw }: DashboardProps = {}) {
           }}
         />
       )}
+
+      {/* Staking Modal */}
+      <StakingModal
+        isOpen={showStakingModal}
+        onClose={() => setShowStakingModal(false)}
+      />
     </motion.div>
   )
 }

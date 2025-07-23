@@ -147,7 +147,7 @@ async function startDev() {
   // Start next dev with appropriate configuration
   const nextBin = path.normalize(path.join(projectRoot, 'node_modules', '.bin', 'next'));
 
-  nextDev = spawn(nextBin, ['dev', '-p', port.toString()], {
+  nextDev = spawn(nextBin, ['dev', '--turbopack', '-p', port.toString()], {
     stdio: 'inherit',
     env: { ...process.env, NEXT_PUBLIC_URL: miniAppUrl, NEXTAUTH_URL: miniAppUrl },
     cwd: projectRoot,
