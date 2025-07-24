@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '../ui/Button';
-import { X, CheckCircle, Clock, AlertCircle, Wifi, WifiOff } from 'lucide-react';
+import { X, CheckCircle, Clock, AlertCircle } from 'lucide-react';
 import { 
   useBRLABalance, 
   useBRLAAllowance, 
@@ -29,10 +29,10 @@ export const StakingModal = ({ isOpen, onClose }: StakingModalProps) => {
   const [error, setError] = useState('');
 
   // Network management
-  const { isOnPolygon, needsSwitch } = useEnsurePolygonNetwork();
+  const { isOnPolygon: _isOnPolygon, needsSwitch: _needsSwitch } = useEnsurePolygonNetwork();
 
   // Contract hooks
-  const { balance: brlaBalance, balanceRaw: brlaBalanceRaw } = useBRLABalance();
+  const { balance: brlaBalance, balanceRaw: _brlaBalanceRaw } = useBRLABalance();
   const { hasInfiniteApproval, refetch: refetchAllowance } = useBRLAAllowance();
   const { approveInfinite, isLoading: isApproving, hash: approveHash, error: approveError } = useApproveBRLA();
   const { stake, isLoading: isStaking, hash: stakeHash } = useStakeBRLA();
@@ -310,7 +310,7 @@ export const StakingModal = ({ isOpen, onClose }: StakingModalProps) => {
             <div>
               <h2 className="text-2xl font-bold text-gray-900 mb-2">Ready to Stake</h2>
               <p className="text-gray-600 mb-4">
-                You're about to stake {amount} BRLA tokens.
+                You&apos;re about to stake {amount} BRLA tokens.
               </p>
               <div className="bg-blue-50 rounded-lg p-4">
                 <div className="flex justify-between text-sm">
@@ -318,7 +318,7 @@ export const StakingModal = ({ isOpen, onClose }: StakingModalProps) => {
                   <span className="font-medium">{amount} BRLA</span>
                 </div>
                 <div className="flex justify-between text-sm mt-1">
-                  <span className="text-gray-600">You'll receive:</span>
+                  <span className="text-gray-600">You&apos;ll receive:</span>
                   <span className="font-medium">≈ {amount} stBRLA</span>
                 </div>
               </div>
@@ -357,7 +357,7 @@ export const StakingModal = ({ isOpen, onClose }: StakingModalProps) => {
             <div>
               <h2 className="text-2xl font-bold text-gray-900 mb-2">Staking Successful!</h2>
               <p className="text-gray-600 mb-4">
-                You've successfully staked {amount} BRLA tokens.
+                You&apos;ve successfully staked {amount} BRLA tokens.
               </p>
               <div className="bg-green-50 rounded-lg p-4">
                 <div className="flex justify-between text-sm">
@@ -406,7 +406,7 @@ export const StakingModal = ({ isOpen, onClose }: StakingModalProps) => {
         >
           <div className="flex justify-between items-center mb-6">
             <div className="flex space-x-2">
-              {['input', 'approve', 'stake', 'success'].map((s, i) => (
+              {['input', 'approve', 'stake', 'success'].map((s, _i) => (
                 <div
                   key={s}
                   className={`w-2 h-2 rounded-full ${

@@ -1,8 +1,40 @@
-// React hooks for BRLA/stBRLA contract interactions
-import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt, useSwitchChain } from 'wagmi'
-import { formatUnits, parseUnits } from 'viem'
+/**
+ * Production-ready React hooks for BRLA/stBRLA contract interactions
+ * 
+ * Features:
+ * - Automatic Polygon network switching
+ * - Comprehensive error handling
+ * - Performance optimized with memoization
+ * - Type-safe transaction handling
+ */
+import { useAccount, useReadContract, useSendTransaction, useWaitForTransactionReceipt, useSwitchChain, useConnect } from 'wagmi'
+import { formatUnits, parseUnits, encodeFunctionData } from 'viem'
 import { CONTRACTS, ERC20_ABI, STAKED_BRLA_ABI, MAX_UINT256, TARGET_CHAIN_ID } from './contracts'
-import { useEffect } from 'react'
+import { createContractError } from './errors'
+import { useState, useMemo, useCallback } from 'react'
+
+// Types for hook return values
+export interface TransactionState {
+  hash: string | null
+  isPending: boolean
+  isConfirming: boolean
+  isConfirmed: boolean
+  isLoading: boolean
+  error: Error | null
+}
+
+export interface ApprovalHookReturn extends TransactionState {
+  approve: (amount?: string) => Promise<string>
+  approveInfinite: () => Promise<string>
+  hasEvmConnector: boolean
+  isOnPolygon: boolean
+}
+
+export interface StakingHookReturn extends TransactionState {
+  stake: (amount: string) => Promise<string>
+  hasEvmConnector: boolean
+  isOnPolygon: boolean
+}
 
 // Custom hook to ensure user is on Polygon
 export function useEnsurePolygonNetwork() {
@@ -25,17 +57,12 @@ export function useEnsurePolygonNetwork() {
   }
 }
 
-// Hook to get BRLA balance for connected wallet
+/**
+ * Hook to get BRLA balance for connected wallet
+ * Only works on Polygon network
+ */
 export function useBRLABalance() {
   const { address, chainId } = useAccount()
-  const { switchToPolygon } = useEnsurePolygonNetwork()
-
-  // Auto-switch to Polygon if connected to wrong network
-  useEffect(() => {
-    if (address && chainId && chainId !== TARGET_CHAIN_ID) {
-      switchToPolygon()
-    }
-  }, [address, chainId, switchToPolygon])
 
   const { data: balance, isLoading, refetch } = useReadContract({
     address: CONTRACTS.BRLA.address as `0x${string}`,
@@ -56,17 +83,12 @@ export function useBRLABalance() {
   }
 }
 
-// Hook to get stBRLA balance for connected wallet
+/**
+ * Hook to get stBRLA balance for connected wallet
+ * Only works on Polygon network
+ */
 export function useStBRLABalance() {
   const { address, chainId } = useAccount()
-  const { switchToPolygon } = useEnsurePolygonNetwork()
-
-  // Auto-switch to Polygon if connected to wrong network
-  useEffect(() => {
-    if (address && chainId && chainId !== TARGET_CHAIN_ID) {
-      switchToPolygon()
-    }
-  }, [address, chainId, switchToPolygon])
 
   const { data: balance, isLoading, refetch } = useReadContract({
     address: CONTRACTS.STAKED_BRLA.address as `0x${string}`,
@@ -87,7 +109,10 @@ export function useStBRLABalance() {
   }
 }
 
-// Hook to check BRLA allowance for stBRLA contract
+/**
+ * Hook to check BRLA allowance for stBRLA contract
+ * Only works on Polygon network
+ */
 export function useBRLAAllowance() {
   const { address, chainId } = useAccount()
 
@@ -113,112 +138,190 @@ export function useBRLAAllowance() {
   }
 }
 
-// Hook to approve BRLA for stBRLA contract
-export function useApproveBRLA() {
-  const { writeContract, data: hash, isPending, error } = useWriteContract({
-    mutation: {
-      onError: (error) => {
-        console.error('🔍 [DEBUG] useWriteContract onError:', error)
-      },
-      onSuccess: (data) => {
-        console.log('🔍 [DEBUG] useWriteContract onSuccess:', data)
-      }
-    }
-  })
+/**
+ * Hook to approve BRLA for stBRLA contract
+ * Automatically switches to Polygon network if needed
+ * Requires EVM wallet (Coinbase, MetaMask, etc.)
+ */
+export function useApproveBRLA(): ApprovalHookReturn {
+  const [approveTransactionHash, setApproveTransactionHash] = useState<string | null>(null)
+  const { connectors } = useConnect()
+  const { chainId } = useAccount()
+  const { switchChain } = useSwitchChain()
+  
+  const { sendTransaction, error, isPending } = useSendTransaction()
 
-  const { isLoading: isConfirming } = useWaitForTransactionReceipt({
-    hash,
+  const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
+    hash: approveTransactionHash as `0x${string}`,
     chainId: TARGET_CHAIN_ID,
   })
 
-  const approve = (amount?: string) => {
-    console.log('🔍 [DEBUG] approve() called with amount:', amount)
-    
+  // Memoize connector checks for performance
+  const hasEvmConnector = useMemo(() => 
+    connectors.some(c => 
+      c.name.toLowerCase().includes('coinbase') || 
+      c.name.toLowerCase().includes('metamask') ||
+      c.name.toLowerCase().includes('wallet')
+    ), [connectors]
+  )
+
+  const isOnPolygon = useMemo(() => chainId === TARGET_CHAIN_ID, [chainId])
+
+  const approve = useCallback(async (amount?: string) => {
+    if (!hasEvmConnector) {
+      throw createContractError('EVM_WALLET_REQUIRED', 'EVM wallet required. Please connect with Coinbase Wallet or MetaMask.')
+    }
+
+    // Auto-switch to Polygon network if needed
+    if (!isOnPolygon) {
+      try {
+        await switchChain({ chainId: TARGET_CHAIN_ID })
+        await new Promise(resolve => setTimeout(resolve, 1500)) // Allow network switch to complete
+      } catch (error) {
+        throw createContractError('NETWORK_SWITCH_FAILED', 'Failed to switch to Polygon network. Please switch manually.', error instanceof Error ? error : undefined)
+      }
+    }
+
     const approvalAmount = amount ? parseUnits(amount, CONTRACTS.BRLA.decimals) : MAX_UINT256
     
-    const payload = {
-      address: CONTRACTS.BRLA.address as `0x${string}`,
+    const data = encodeFunctionData({
       abi: ERC20_ABI,
       functionName: 'approve',
       args: [CONTRACTS.STAKED_BRLA.address, approvalAmount],
-      chainId: TARGET_CHAIN_ID,
-    }
-    
-    console.log('🔍 [DEBUG] Approve transaction payload:', {
-      contractAddress: payload.address,
-      spender: CONTRACTS.STAKED_BRLA.address,
-      amount: approvalAmount.toString(),
-      chainId: payload.chainId,
-      isInfiniteApproval: !amount,
-      MAX_UINT256: MAX_UINT256.toString()
     })
     
-    console.log('🔍 [DEBUG] About to call writeContract with payload:', payload)
-    
-    try {
-      // ERC20 approve doesn't need to send any native tokens - NO VALUE FIELD!
-      writeContract(payload)
-      console.log('🔍 [DEBUG] writeContract call initiated successfully')
-    } catch (error) {
-      console.error('🔍 [DEBUG] writeContract call failed immediately:', error)
-      throw error
-    }
-  }
+    return new Promise<string>((resolve, reject) => {
+      try {
+        sendTransaction(
+          {
+            to: CONTRACTS.BRLA.address as `0x${string}`,
+            data,
+            chainId: TARGET_CHAIN_ID,
+            gas: 100000n,
+          },
+          {
+            onSuccess: (hash) => {
+              setApproveTransactionHash(hash)
+              resolve(hash)
+            },
+            onError: (error) => {
+              reject(createContractError('TRANSACTION_FAILED', `Transaction failed: ${error.message || 'Unknown error'}`, error instanceof Error ? error : undefined))
+            },
+          }
+        )
+      } catch (error) {
+        reject(createContractError('TRANSACTION_FAILED', `Failed to submit transaction: ${error instanceof Error ? error.message : 'Unknown error'}`, error instanceof Error ? error : undefined))
+      }
+    })
+  }, [hasEvmConnector, isOnPolygon, switchChain, sendTransaction, setApproveTransactionHash])
 
-  const approveInfinite = () => approve()
+  const approveInfinite = useCallback(async () => await approve(), [approve])
 
   return {
     approve,
     approveInfinite,
-    hash,
+    hash: approveTransactionHash,
     isPending,
     isConfirming,
+    isConfirmed,
     isLoading: isPending || isConfirming,
     error,
+    hasEvmConnector,
+    isOnPolygon,
   }
 }
 
-// Hook to stake BRLA for stBRLA
-export function useStakeBRLA() {
-  const { address } = useAccount()
-  const { writeContract, data: hash, isPending } = useWriteContract()
+/**
+ * Hook to stake BRLA for stBRLA
+ * Automatically switches to Polygon network if needed
+ * Requires EVM wallet (Coinbase, MetaMask, etc.)
+ */
+export function useStakeBRLA(): StakingHookReturn {
+  const { address, chainId } = useAccount()
+  const [stakeTransactionHash, setStakeTransactionHash] = useState<string | null>(null)
+  const { connectors } = useConnect()
+  const { switchChain } = useSwitchChain()
+  
+  const { sendTransaction, error, isPending } = useSendTransaction()
 
-  const { isLoading: isConfirming } = useWaitForTransactionReceipt({
-    hash,
+  const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
+    hash: stakeTransactionHash as `0x${string}`,
     chainId: TARGET_CHAIN_ID,
   })
 
-  const stake = (amount: string) => {
-    if (!address) return
+  // Memoize connector checks for performance
+  const hasEvmConnector = useMemo(() => 
+    connectors.some(c => 
+      c.name.toLowerCase().includes('coinbase') || 
+      c.name.toLowerCase().includes('metamask') ||
+      c.name.toLowerCase().includes('wallet')
+    ), [connectors]
+  )
+
+  const isOnPolygon = useMemo(() => chainId === TARGET_CHAIN_ID, [chainId])
+
+  const stake = useCallback(async (amount: string) => {
+    if (!address) {
+      throw createContractError('WALLET_NOT_CONNECTED', 'Wallet not connected')
+    }
+
+    if (!hasEvmConnector) {
+      throw createContractError('EVM_WALLET_REQUIRED', 'EVM wallet required. Please connect with Coinbase Wallet or MetaMask.')
+    }
+
+    // Auto-switch to Polygon network if needed
+    if (!isOnPolygon) {
+      try {
+        await switchChain({ chainId: TARGET_CHAIN_ID })
+        await new Promise(resolve => setTimeout(resolve, 1500)) // Allow network switch to complete
+      } catch (error) {
+        throw createContractError('NETWORK_SWITCH_FAILED', 'Failed to switch to Polygon network. Please switch manually.', error instanceof Error ? error : undefined)
+      }
+    }
 
     const stakeAmount = parseUnits(amount, CONTRACTS.BRLA.decimals)
     
-    const payload = {
-      address: CONTRACTS.STAKED_BRLA.address as `0x${string}`,
+    const data = encodeFunctionData({
       abi: STAKED_BRLA_ABI,
       functionName: 'stake',
       args: [address, stakeAmount],
-      chainId: TARGET_CHAIN_ID,
-    }
-    
-    console.log('🔍 [DEBUG] Stake transaction payload:', {
-      contractAddress: payload.address,
-      userAddress: address,
-      stakeAmount: stakeAmount.toString(),
-      stakeAmountFormatted: amount,
-      chainId: payload.chainId
     })
     
-    // Staking also doesn't require sending native tokens - NO VALUE FIELD!
-    writeContract(payload)
-  }
+    return new Promise<string>((resolve, reject) => {
+      try {
+        sendTransaction(
+          {
+            to: CONTRACTS.STAKED_BRLA.address as `0x${string}`,
+            data,
+            chainId: TARGET_CHAIN_ID,
+            gas: 200000n,
+          },
+          {
+            onSuccess: (hash) => {
+              setStakeTransactionHash(hash)
+              resolve(hash)
+            },
+            onError: (error) => {
+              reject(createContractError('TRANSACTION_FAILED', `Transaction failed: ${error.message || 'Unknown error'}`, error instanceof Error ? error : undefined))
+            },
+          }
+        )
+      } catch (error) {
+        reject(createContractError('TRANSACTION_FAILED', `Failed to submit transaction: ${error instanceof Error ? error.message : 'Unknown error'}`, error instanceof Error ? error : undefined))
+      }
+    })
+  }, [address, hasEvmConnector, isOnPolygon, switchChain, sendTransaction, setStakeTransactionHash])
 
   return {
     stake,
-    hash,
+    hash: stakeTransactionHash,
     isPending,
     isConfirming,
+    isConfirmed,
     isLoading: isPending || isConfirming,
+    error,
+    hasEvmConnector,
+    isOnPolygon,
   }
 }
 

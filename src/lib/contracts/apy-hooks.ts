@@ -49,7 +49,7 @@ export function useStBRLAAPY() {
 
   // Take snapshot and calculate APY (this would normally be done periodically)
   useEffect(() => {
-    if (totalSupply && brlaBalance) {
+    if (totalSupply && brlaBalance && typeof totalSupply === 'bigint' && typeof brlaBalance === 'bigint') {
       try {
         // Take initial snapshot if none exists
         if (apyCalculator.getSnapshotCount() === 0) {
@@ -57,7 +57,7 @@ export function useStBRLAAPY() {
         }
 
         // For demo, simulate some historical data
-        const mockHistoricalPrice = apyCalculator.calculateCurrentPrice(totalSupply, brlaBalance);
+        const _mockHistoricalPrice = apyCalculator.calculateCurrentPrice(totalSupply, brlaBalance);
         
         setApyData({
           currentAPY: estimatedAPY,

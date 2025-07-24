@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { Button } from "~/components/ui/Button"
 import { User, TrendingUp, Settings } from "lucide-react"
 import { motion } from "framer-motion"
-import { BalanceCard } from "~/components/avenia/BalanceCard"
+// import { BalanceCard } from "~/components/avenia/BalanceCard"
 import { PIXPaymentModal } from "~/components/avenia/PIXPaymentModal"
 import { StakingModal } from "~/components/staking/StakingModal"
 import { NetworkIndicator } from "~/components/ui/NetworkIndicator"
@@ -26,12 +26,12 @@ interface User {
   walletAddress?: string;
 }
 
-interface Balances {
-  BRLA: string;
-  USDC: string;
-  USDT: string;
-  USDM: string;
-}
+// interface Balances {
+//   BRLA: string;
+//   USDC: string;
+//   USDT: string;
+//   USDM: string;
+// }
 
 export function DashboardScreen({ onInvest, onWithdraw }: DashboardProps = {}) {
   const router = useRouter()
@@ -47,7 +47,7 @@ export function DashboardScreen({ onInvest, onWithdraw }: DashboardProps = {}) {
   const { balance: stBrlaBalance, isLoading: stBrlaLoading } = useStBRLABalance()
   
   // Get BRLA balance 
-  const { balance: brlaBalance, isLoading: brlaLoading } = useBRLABalance()
+  const { balance: _brlaBalance, isLoading: _brlaLoading } = useBRLABalance()
   
   // Get APY data for display
   const { currentAPY, isLoading: apyLoading } = useStBRLAAPY()
@@ -121,7 +121,7 @@ export function DashboardScreen({ onInvest, onWithdraw }: DashboardProps = {}) {
     }
   }
 
-  const formatBalance = (balance: string) => {
+  const _formatBalance = (balance: string) => {
     const num = parseFloat(balance) || 0;
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',

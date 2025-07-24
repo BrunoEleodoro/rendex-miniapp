@@ -30,7 +30,7 @@ export const BalanceCard = ({ userId, onPixPayment, onConvert, onBalanceUpdate }
   // Blockchain balance hooks
   const { isConnected } = useAccount();
   const { balance: brlaBalance, isLoading: brlaLoading, refetch: refetchBRLA } = useBRLABalance();
-  const { balance: stBrlaBalance, isLoading: stBrlaLoading, refetch: refetchStBRLA } = useStBRLABalance();
+  const { balance: _stBrlaBalance, isLoading: stBrlaLoading, refetch: refetchStBRLA } = useStBRLABalance();
 
   // Set up real-time updates for balance changes
   const { isConnected: isRealTimeConnected, connectionError } = useRealTimeUpdates({
