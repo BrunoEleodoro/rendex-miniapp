@@ -223,7 +223,7 @@ export function DashboardScreen({ onInvest, onWithdraw }: DashboardProps = {}) {
 
   return (
     <motion.div 
-      className="w-full bg-gradient-to-br from-blue-500 to-blue-600 min-h-screen text-white relative overflow-hidden bg-[url('/images/cloud-bg.png')] bg-cover bg-center"
+      className="w-full bg-gradient-to-br from-blue-500 to-blue-600 min-h-screen text-white relative overflow-y-auto overflow-x-hidden bg-[url('/images/cloud-bg.png')] bg-cover bg-center"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
@@ -402,7 +402,7 @@ export function DashboardScreen({ onInvest, onWithdraw }: DashboardProps = {}) {
 
       {/* Action Buttons */}
       <motion.div 
-        className="px-4 mt-8 space-y-4 max-w-sm mx-auto"
+        className="px-4 mt-8 space-y-4 max-w-sm mx-auto pb-8"
         initial={{ y: 50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 2, duration: 0.6 }}
