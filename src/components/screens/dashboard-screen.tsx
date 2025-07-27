@@ -9,6 +9,7 @@ import { motion } from "framer-motion"
 import { PIXPaymentModal } from "~/components/avenia/PIXPaymentModal"
 import { StakingModal } from "~/components/staking/StakingModal"
 import { UnstakingModal } from "~/components/staking/UnstakingModal"
+import { InvestModal } from "~/components/modals/invest-modal"
 import { NetworkIndicator } from "~/components/ui/NetworkIndicator"
 import { sdk } from "@farcaster/miniapp-sdk"
 import { useAccount } from "wagmi"
@@ -37,6 +38,7 @@ interface User {
 export function DashboardScreen({ onInvest, onWithdraw }: DashboardProps = {}) {
   const router = useRouter()
   const [user, setUser] = useState<User | null>(null)
+  const [showInvestModal, setShowInvestModal] = useState(false)
   const [showPixModal, setShowPixModal] = useState(false)
   const [showStakingModal, setShowStakingModal] = useState(false)
   const [showUnstakingModal, setShowUnstakingModal] = useState(false)
@@ -135,9 +137,9 @@ export function DashboardScreen({ onInvest, onWithdraw }: DashboardProps = {}) {
         console.log('[DashboardScreen] No user found, redirecting to welcome to connect wallet');
         router.push("/welcome")
       } else {
-        // Open PIX payment modal directly (KYC bypassed)
-        console.log('[DashboardScreen] Opening PIX investment modal (KYC bypassed)');
-        setShowPixModal(true)
+        // Open invest modal first (KYC bypassed)
+        console.log('[DashboardScreen] Opening invest modal first');
+        setShowInvestModal(true)
       }
     }
   }
@@ -463,6 +465,19 @@ export function DashboardScreen({ onInvest, onWithdraw }: DashboardProps = {}) {
       </motion.div>
 
       {/* Note: BalanceCard removed - now using direct blockchain hooks */}
+
+      {/* Invest Modal */}
+      {showInvestModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <InvestModal
+            onClose={() => setShowInvestModal(false)}
+            onPixInvest={() => {
+              setShowInvestModal(false);
+              setShowPixModal(true);
+            }}
+          />
+        </div>
+      )}
 
       {/* PIX Payment Modal */}
       {showPixModal && user && (
