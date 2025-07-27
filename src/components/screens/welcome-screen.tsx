@@ -265,7 +265,7 @@ export function WelcomeScreen({ onNext }: ScreenProps = {}) {
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.4, duration: 0.6 }}
         >
-          Welcome to RendeX
+          Bem-vindo ao RendeX
         </motion.h1>
         <motion.p 
           className="text-gray-600 max-w-xs mb-6"
@@ -273,7 +273,7 @@ export function WelcomeScreen({ onNext }: ScreenProps = {}) {
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.6, duration: 0.6 }}
         >
-          With the wind at your back, your earnings go beyond borders
+          Com o vento a favor, seus ganhos voam além das fronteiras
         </motion.p>
 
         {!isWalletConnected && !user && (
@@ -287,7 +287,7 @@ export function WelcomeScreen({ onNext }: ScreenProps = {}) {
             {!isSDKLoaded ? (
               <div className="text-center">
                 <div className="spinner h-6 w-6 mx-auto mb-2"></div>
-                <p className="text-sm text-gray-600">Loading authentication...</p>
+                <p className="text-sm text-gray-600">Carregando autenticação...</p>
               </div>
             ) : (
               <>
@@ -329,7 +329,7 @@ export function WelcomeScreen({ onNext }: ScreenProps = {}) {
                               {/* Center - Label and username */}
                               <div className="text-left">
                                 <div className="font-semibold text-gray-800">
-                                  {isCreatingAccount ? 'Creating Account...' : 'Create Account'}
+                                  {isCreatingAccount ? 'Criando Conta...' : 'Criar Conta'}
                                 </div>
                                 <div className="text-sm text-gray-600">
                                   @{neynarUser?.username}
@@ -361,10 +361,10 @@ export function WelcomeScreen({ onNext }: ScreenProps = {}) {
                           </div>
                           <div>
                             <h3 className="text-lg font-semibold text-gray-800">
-                              {fetchingUser ? 'Fetching user data...' : 'Checking if you created an account before...'}
+                              {fetchingUser ? 'Buscando dados do usuário...' : 'Verificando se você já criou uma conta...'}
                             </h3>
                             <p className="text-sm text-gray-500 mt-2">
-                              {fetchingUser ? 'One more detail...' : 'Almost ready...'}
+                              {fetchingUser ? 'Mais um detalhe...' : 'Quase pronto...'}
                             </p>
                           </div>
                         </div>
@@ -373,7 +373,7 @@ export function WelcomeScreen({ onNext }: ScreenProps = {}) {
                       <div className="space-y-4">
                         <div className="text-center">
                           <p className="text-sm text-gray-600 mb-4">
-                            Connect your Farcaster wallet to get started
+                            Conecte sua carteira Farcaster para começar
                           </p>
                         </div>
                         <FarcasterSignIn />
@@ -402,7 +402,7 @@ export function WelcomeScreen({ onNext }: ScreenProps = {}) {
           >
             {user?.kycStatus === 'completed' && (
               <>
-                Go to Dashboard
+                Ir para o Painel
                 <ArrowRight className="ml-2 h-5 w-5" />
               </>
             )}

@@ -48,7 +48,7 @@ export const PIXPaymentModal = ({ isOpen, onClose, userId, onSuccess, walletAddr
   }, [brCode]);
 
   // Set up real-time updates via SSE
-  const { isConnected, connectionError } = useRealTimeUpdates({
+  const { isConnected, connectionError: _connectionError } = useRealTimeUpdates({
     userId,
     onPaymentUpdate: (update) => {
       console.log(`[PIXPaymentModal] Real-time payment update received:`, update);
@@ -68,7 +68,7 @@ export const PIXPaymentModal = ({ isOpen, onClose, userId, onSuccess, walletAddr
       // Handle payment failure
       if (update.type === 'payment_failed' && update.data?.ticketId === ticketId) {
         console.log(`[PIXPaymentModal] Payment failed via real-time update for ticket: ${ticketId}`);
-        setError(`Payment failed: ${update.data.reason || 'Unknown error'}`);
+        setError(`Pagamento falhou: ${update.data.reason || 'Erro desconhecido'}`);        
       }
     },
     autoReconnect: true
@@ -107,7 +107,7 @@ export const PIXPaymentModal = ({ isOpen, onClose, userId, onSuccess, walletAddr
     
     const amountNum = getNumericAmount();
     if (!amountNum || amountNum <= 0) {
-      setError('Please enter a valid amount');
+      setError('Por favor insira um valor válido');
       return;
     }
     
@@ -123,7 +123,7 @@ export const PIXPaymentModal = ({ isOpen, onClose, userId, onSuccess, walletAddr
       console.log(`[PIXPaymentModal] PIX payment created - ticket: ${payment.ticketId}, wallet: ${walletAddress ? 'external' : 'internal'}, waiting for webhook completion via real-time updates`);
     } catch (err: any) {
       console.error(`[PIXPaymentModal] PIX payment creation failed:`, err.message);
-      setError(err.message || 'Failed to create PIX payment');
+      setError(err.message || 'Falha ao criar pagamento PIX');
     }
   };
 
@@ -160,9 +160,9 @@ export const PIXPaymentModal = ({ isOpen, onClose, userId, onSuccess, walletAddr
         <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-bold text-gray-900">
-              {step === 'amount' && 'PIX to BRLA'}
-              {step === 'payment' && 'Complete Payment'}
-              {step === 'success' && 'Payment Successful'}
+              {step === 'amount' && 'PIX para BRLA'}
+              {step === 'payment' && 'Complete o Pagamento'}
+              {step === 'success' && 'Pagamento Realizado'}
             </h2>
             <button onClick={handleClose} className="text-gray-500 hover:text-gray-700">
               ✕
@@ -184,14 +184,14 @@ export const PIXPaymentModal = ({ isOpen, onClose, userId, onSuccess, walletAddr
           <div className="flex items-center gap-2 mb-4">
             <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
             <span className="text-sm text-gray-600">
-              {isConnected ? 'Real-time updates connected' : 'Real-time updates disconnected'}
+              {isConnected ? 'Atualizações em tempo real conectadas' : 'Atualizações em tempo real desconectadas'}
             </span>
           </div>
 
           {step === 'amount' && (
             <form onSubmit={handleCreatePayment} className="space-y-4">
               <div>
-                <label htmlFor="amount" className="text-base font-semibold mb-3 block text-gray-800">Amount (BRLA)</label>
+                <label htmlFor="amount" className="text-base font-semibold mb-3 block text-gray-800">Valor (BRLA)</label>
                 <input
                   id="amount"
                   type="text"
@@ -203,12 +203,12 @@ export const PIXPaymentModal = ({ isOpen, onClose, userId, onSuccess, walletAddr
                   className="text-black text-3xl font-bold py-6 px-4 text-center h-20 w-full border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 placeholder-gray-400"
                 />
                 <p className="text-sm text-gray-600 mt-3 text-center">
-                  You will receive {displayAmount} BRLA stablecoins
+                  Você receberá {displayAmount} BRLA stablecoins
                 </p>
               </div>
 
               <Button type="submit" disabled={loading || getNumericAmount() <= 0} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed">
-                {loading ? 'Creating Payment...' : `Create PIX Payment - ${formatCurrency(amount)}`}
+                {loading ? 'Criando Pagamento...' : `Criar Pagamento PIX - ${formatCurrency(amount)}`}
               </Button>
             </form>
           )}
@@ -225,21 +225,21 @@ export const PIXPaymentModal = ({ isOpen, onClose, userId, onSuccess, walletAddr
                     />
                   ) : (
                     <div className="w-48 h-48 bg-gray-300 mx-auto rounded flex items-center justify-center">
-                      <span className="text-gray-600">Generating QR Code...</span>
+                      <span className="text-gray-600">Gerando Código QR...</span>
                     </div>
                   )}
                 </div>
                 
                 <p className="text-sm text-gray-600 mb-2">
-                  Scan the QR code with your banking app or copy the PIX code below:
+                  Escaneie o código QR com seu aplicativo bancário ou copie o código PIX abaixo:
                 </p>
                 
                 {walletAddress && (
                   <div className="bg-blue-50 p-3 rounded-lg mb-4">
                     <p className="text-sm text-blue-800">
-                      <strong>BRLA will be transferred to:</strong><br />
+                      <strong>BRLA será transferido para:</strong><br />
                       <span className="font-mono text-xs break-all">{walletAddress}</span><br />
-                      <span className="text-xs text-blue-600 mt-1 block">📍 POLYGON Network</span>
+                      <span className="text-xs text-blue-600 mt-1 block">📍 Rede POLYGON</span>
                     </p>
                   </div>
                 )}
@@ -254,21 +254,21 @@ export const PIXPaymentModal = ({ isOpen, onClose, userId, onSuccess, walletAddr
                   size="sm"
                   className="mt-2 bg-white text-gray-900 border-gray-300 hover:bg-gray-50"
                 >
-                  Copy PIX Code
+                  Copiar Código PIX
                 </Button>
               </div>
 
               <div className="bg-blue-50 p-4 rounded-lg">
-                <h4 className="font-medium text-blue-900 mb-2">Payment Details:</h4>
+                <h4 className="font-medium text-blue-900 mb-2">Detalhes do Pagamento:</h4>
                 <div className="text-sm space-y-1 text-blue-800">
-                  <p>Amount: {formatCurrency(getNumericAmount())}</p>
-                  <p>You&apos;ll receive: {displayAmount} BRLA</p>
-                  <p>Expires: {new Date(expiration).toLocaleTimeString()}</p>
+                  <p>Valor: {formatCurrency(getNumericAmount())}</p>
+                  <p>Você receberá: {displayAmount} BRLA</p>
+                  <p>Expira: {new Date(expiration).toLocaleTimeString()}</p>
                 </div>
               </div>
 
               <p className="text-sm text-gray-600 text-center">
-                Complete the payment and this page will update automatically via real-time webhooks.
+                Complete o pagamento e esta página será atualizada automaticamente via webhooks em tempo real.
               </p>
             </div>
           )}
@@ -281,13 +281,13 @@ export const PIXPaymentModal = ({ isOpen, onClose, userId, onSuccess, walletAddr
                 </svg>
               </div>
               
-              <h3 className="text-lg font-semibold text-green-600">Payment Successful!</h3>
+              <h3 className="text-lg font-semibold text-green-600">Pagamento Realizado!</h3>
               <p className="text-gray-600">
-                You have successfully converted {formatCurrency(getNumericAmount())} to {displayAmount} BRLA stablecoins.
+                Você converteu com sucesso {formatCurrency(getNumericAmount())} para {displayAmount} BRLA stablecoins.
               </p>
               
               <Button onClick={() => { onSuccess(); handleClose(); }} className="w-full">
-                Continue
+                Continuar
               </Button>
             </div>
           )}

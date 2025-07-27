@@ -7,7 +7,7 @@
  * - Performance optimized with memoization
  * - Type-safe transaction handling
  */
-import { useAccount, useReadContract, useSendTransaction, useWaitForTransactionReceipt, useSwitchChain, useConnect } from 'wagmi'
+import { useAccount, useReadContract, useWriteContract, useSendTransaction, useWaitForTransactionReceipt, useSwitchChain, useConnect } from 'wagmi'
 import { formatUnits, parseUnits, encodeFunctionData } from 'viem'
 import { CONTRACTS, ERC20_ABI, STAKED_BRLA_ABI, MAX_UINT256, TARGET_CHAIN_ID } from './contracts'
 import { createContractError } from './errors'

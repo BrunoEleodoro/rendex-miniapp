@@ -77,9 +77,9 @@ export const StakingModal = ({ isOpen, onClose }: StakingModalProps) => {
     const maxBalance = parseFloat(brlaBalance);
     
     if (numAmount > maxBalance) {
-      setError(`Insufficient BRLA balance. Maximum: ${brlaBalance}`);
+      setError(`Saldo BRLA insuficiente. Máximo: ${brlaBalance}`);
     } else if (numAmount <= 0) {
-      setError('Amount must be greater than 0');
+      setError('O valor deve ser maior que 0');
     }
   };
 
@@ -104,14 +104,14 @@ export const StakingModal = ({ isOpen, onClose }: StakingModalProps) => {
       console.log('💡 Debug info at time of failure:');
       logContractDebugInfo(debugInfo);
       
-      let errorMessage = 'Approval failed. Please try again.';
+      let errorMessage = 'Aprovação falhou. Tente novamente.';
       
       if (err?.message?.includes('rejected')) {
-        errorMessage = 'Transaction was rejected by user.';
+        errorMessage = 'Transação foi rejeitada pelo usuário.';
       } else if (err?.message?.includes('insufficient funds')) {
-        errorMessage = 'Insufficient funds for gas fees.';
+        errorMessage = 'Fundos insuficientes para taxas de gas.';
       } else if (err?.message?.includes('network')) {
-        errorMessage = 'Network error. Please check your connection.';
+        errorMessage = 'Erro de rede. Verifique sua conexão.';
       }
       
       // Also check the wagmi error
@@ -127,7 +127,7 @@ export const StakingModal = ({ isOpen, onClose }: StakingModalProps) => {
 
   const handleStake = async () => {
     if (!amount || parseFloat(amount) <= 0) {
-      setError('Please enter a valid amount');
+      setError('Por favor insira um valor válido');
       return;
     }
 
@@ -137,16 +137,16 @@ export const StakingModal = ({ isOpen, onClose }: StakingModalProps) => {
       await stake(amount);
     } catch (err: any) {
       console.error('Staking failed:', err);
-      let errorMessage = 'Staking failed. Please try again.';
+      let errorMessage = 'Stake falhou. Tente novamente.';
       
       if (err?.message?.includes('rejected')) {
-        errorMessage = 'Transaction was rejected by user.';
+        errorMessage = 'Transação foi rejeitada pelo usuário.';
       } else if (err?.message?.includes('insufficient funds')) {
-        errorMessage = 'Insufficient funds for gas fees.';
+        errorMessage = 'Fundos insuficientes para taxas de gas.';
       } else if (err?.message?.includes('network')) {
-        errorMessage = 'Network error. Please check your connection.';
+        errorMessage = 'Erro de rede. Verifique sua conexão.';
       } else if (err?.message?.includes('allowance')) {
-        errorMessage = 'Insufficient allowance. Please approve first.';
+        errorMessage = 'Permissão insuficiente. Aprove primeiro.';
       }
       
       setError(errorMessage);
@@ -170,9 +170,9 @@ export const StakingModal = ({ isOpen, onClose }: StakingModalProps) => {
         return (
           <div className="space-y-6">
             <div className="text-center">
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Stake BRLA</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Investir BRLA</h2>
               <p className="text-gray-600">
-                Stake your BRLA tokens to earn rewards with stBRLA
+                Invista seus tokens BRLA para ganhar recompensas com stBRLA
               </p>
             </div>
 
@@ -180,14 +180,14 @@ export const StakingModal = ({ isOpen, onClose }: StakingModalProps) => {
               {/* APY Display */}
               <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-4 text-center">
                 <div className="text-2xl font-bold text-green-600 mb-1">
-                  {apyLoading ? 'Loading...' : `${currentAPY.toFixed(1)}%`}
+                  {apyLoading ? 'Carregando...' : `${currentAPY.toFixed(1)}%`}
                 </div>
-                <div className="text-sm text-gray-600">Current APY</div>
+                <div className="text-sm text-gray-600">APY Atual</div>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Amount to Stake
+                  Valor para Investir
                 </label>
                 <div className="relative">
                   <input
@@ -205,7 +205,7 @@ export const StakingModal = ({ isOpen, onClose }: StakingModalProps) => {
                   </button>
                 </div>
                 <div className="flex justify-between text-sm text-gray-500 mt-1">
-                  <span>Available: {brlaBalance} BRLA</span>
+                  <span>Disponível: {brlaBalance} BRLA</span>
                   <span>≈ R$ {(parseFloat(amount || '0') * 1).toFixed(2)}</span>
                 </div>
               </div>
@@ -213,22 +213,22 @@ export const StakingModal = ({ isOpen, onClose }: StakingModalProps) => {
               {/* Rewards Estimate */}
               {amount && parseFloat(amount) > 0 && (
                 <div className="bg-blue-50 rounded-lg p-4">
-                  <div className="text-sm font-medium text-gray-700 mb-2">Estimated Rewards</div>
+                  <div className="text-sm font-medium text-gray-700 mb-2">Recompensas Estimadas</div>
                   <div className="grid grid-cols-2 gap-2 text-xs">
                     <div>
-                      <span className="text-gray-500">Daily:</span>
+                      <span className="text-gray-500">Diária:</span>
                       <span className="font-medium ml-1 text-gray-700">R$ {rewardsEstimate.daily.toFixed(2)}</span>
                     </div>
                     <div>
-                      <span className="text-gray-500">Monthly:</span>
+                      <span className="text-gray-500">Mensal:</span>
                       <span className="font-medium ml-1 text-gray-700">R$ {rewardsEstimate.monthly.toFixed(2)}</span>
                     </div>
                     <div>
-                      <span className="text-gray-500">Weekly:</span>
+                      <span className="text-gray-500">Semanal:</span>
                       <span className="font-medium ml-1 text-gray-700">R$ {rewardsEstimate.weekly.toFixed(2)}</span>
                     </div>
                     <div>
-                      <span className="text-gray-500">Yearly:</span>
+                      <span className="text-gray-500">Anual:</span>
                       <span className="font-medium ml-1 text-gray-700">R$ {rewardsEstimate.yearly.toFixed(2)}</span>
                     </div>
                   </div>
@@ -248,7 +248,7 @@ export const StakingModal = ({ isOpen, onClose }: StakingModalProps) => {
               disabled={!amount || parseFloat(amount) <= 0 || !!error || parseFloat(amount) > parseFloat(brlaBalance)}
               className="w-full bg-blue-500 hover:bg-blue-600"
             >
-              Continue
+              Continuar
             </Button>
           </div>
         );
@@ -260,9 +260,9 @@ export const StakingModal = ({ isOpen, onClose }: StakingModalProps) => {
               <Clock className="w-8 h-8 text-yellow-600" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Approve BRLA</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Aprovar BRLA</h2>
               <p className="text-gray-600">
-                First, you need to approve BRLA tokens for staking. This is a one-time approval.
+                Primeiro, você precisa aprovar tokens BRLA para staking. Esta é uma aprovação única.
               </p>
             </div>
             <Button
@@ -270,7 +270,7 @@ export const StakingModal = ({ isOpen, onClose }: StakingModalProps) => {
               disabled={isApproving}
               className="w-full bg-yellow-500 hover:bg-yellow-600"
             >
-              {isApproving ? 'Approving...' : 'Approve BRLA'}
+              {isApproving ? 'Aprovando...' : 'Aprovar BRLA'}
             </Button>
             
             {/* Debug Button */}
@@ -281,7 +281,7 @@ export const StakingModal = ({ isOpen, onClose }: StakingModalProps) => {
               }}
               className="w-full text-xs text-gray-500 hover:text-gray-700 p-2 border border-gray-200 rounded"
             >
-              Debug Contract Info
+              Debug Info do Contrato
             </button>
           </div>
         );
@@ -293,9 +293,9 @@ export const StakingModal = ({ isOpen, onClose }: StakingModalProps) => {
               <Clock className="w-8 h-8 text-yellow-600" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Approving...</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Aprovando...</h2>
               <p className="text-gray-600">
-                Please confirm the approval transaction in your wallet.
+                Por favor confirme a transação de aprovação em sua carteira.
               </p>
             </div>
           </div>
@@ -308,17 +308,17 @@ export const StakingModal = ({ isOpen, onClose }: StakingModalProps) => {
               <CheckCircle className="w-8 h-8 text-green-600" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Ready to Stake</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Pronto para Investir</h2>
               <p className="text-gray-600 mb-4">
-                You&apos;re about to stake {amount} BRLA tokens.
+                Você está prestes a investir {amount} tokens BRLA.
               </p>
               <div className="bg-blue-50 rounded-lg p-4">
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Amount:</span>
+                  <span className="text-gray-600">Valor:</span>
                   <span className="font-medium text-gray-700">{amount} BRLA</span>
                 </div>
                 <div className="flex justify-between text-sm mt-1">
-                  <span className="text-gray-600">You'll receive:</span>
+                  <span className="text-gray-600">Você receberá:</span>
                   <span className="font-medium text-gray-700">≈ {amount} stBRLA</span>
                 </div>
               </div>
@@ -328,7 +328,7 @@ export const StakingModal = ({ isOpen, onClose }: StakingModalProps) => {
               disabled={isStaking}
               className="w-full bg-blue-500 hover:bg-blue-600"
             >
-              {isStaking ? 'Staking...' : 'Stake Now'}
+              {isStaking ? 'Investindo...' : 'Investir Agora'}
             </Button>
           </div>
         );
@@ -340,9 +340,9 @@ export const StakingModal = ({ isOpen, onClose }: StakingModalProps) => {
               <Clock className="w-8 h-8 text-blue-600" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Staking...</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Investindo...</h2>
               <p className="text-gray-600">
-                Please confirm the staking transaction in your wallet.
+                Por favor confirme a transação de investimento em sua carteira.
               </p>
             </div>
           </div>
@@ -355,17 +355,17 @@ export const StakingModal = ({ isOpen, onClose }: StakingModalProps) => {
               <CheckCircle className="w-8 h-8 text-green-600" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Staking Successful!</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Staking Realizado!</h2>
               <p className="text-gray-600 mb-4">
-                You&apos;ve successfully staked {amount} BRLA tokens.
+                Você investiu com sucesso {amount} tokens BRLA.
               </p>
               <div className="bg-green-50 rounded-lg p-4">
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Staked:</span>
+                  <span className="text-gray-600">Investido:</span>
                   <span className="font-medium text-green-600">{amount} BRLA</span>
                 </div>
                 <div className="flex justify-between text-sm mt-1">
-                  <span className="text-gray-600">Received:</span>
+                  <span className="text-gray-600">Recebido:</span>
                   <span className="font-medium text-green-600">≈ {amount} stBRLA</span>
                 </div>
               </div>
@@ -374,7 +374,7 @@ export const StakingModal = ({ isOpen, onClose }: StakingModalProps) => {
               onClick={onClose}
               className="w-full bg-green-500 hover:bg-green-600"
             >
-              Done
+              Pronto
             </Button>
           </div>
         );

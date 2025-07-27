@@ -75,7 +75,7 @@ export const KYCFlow = ({ userId, onKYCComplete, subaccountId }: KYCFlowProps) =
       
     } catch (err: any) {
       console.error(`[KYCFlow] KYC initiation failed for user ${userId}:`, err.message);
-      setError(err.message || 'Failed to start KYC');
+      setError(err.message || 'Falha ao iniciar KYC');
     }
   };
 
@@ -109,13 +109,13 @@ export const KYCFlow = ({ userId, onKYCComplete, subaccountId }: KYCFlowProps) =
   const getKYCStatusMessage = () => {
     switch (kycStatus) {
       case 'not_started':
-        return 'Complete your identity verification to access all RendeX features.';
+        return 'Complete sua verificação de identidade para acessar todos os recursos do RendeX.';
       case 'in_progress':
-        return 'Your KYC verification is in progress. Please complete the process in the opened window.';
+        return 'Sua verificação KYC está em andamento. Complete o processo na janela aberta.';
       case 'completed':
-        return 'Your identity has been verified successfully!';
+        return 'Sua identidade foi verificada com sucesso!';
       case 'rejected':
-        return 'Your identity verification was rejected. Please contact support for assistance.';
+        return 'Sua verificação de identidade foi rejeitada. Entre em contato com o suporte para assistência.';
       default:
         return '';
     }
@@ -139,7 +139,7 @@ export const KYCFlow = ({ userId, onKYCComplete, subaccountId }: KYCFlowProps) =
   return (
     <div className="bg-white rounded-lg p-6 shadow-lg">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold">Identity Verification (KYC)</h3>
+        <h3 className="text-lg font-semibold">Verificação de Identidade (KYC)</h3>
         <div className={`px-3 py-1 rounded-full text-sm font-medium ${getKYCStatusColor()} bg-gray-100`}>
           {kycStatus.replace('_', ' ').toUpperCase()}
         </div>
@@ -163,14 +163,14 @@ export const KYCFlow = ({ userId, onKYCComplete, subaccountId }: KYCFlowProps) =
 
       {connectionError && (
         <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-4">
-          Real-time updates disconnected: {connectionError}
+          Atualizações em tempo real desconectadas: {connectionError}
         </div>
       )}
 
       <div className="flex items-center gap-2 mb-4">
         <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
         <span className="text-sm text-gray-600">
-          {isConnected ? 'Real-time updates connected' : 'Real-time updates disconnected'}
+          {isConnected ? 'Atualizações em tempo real conectadas' : 'Atualizações em tempo real desconectadas'}
         </span>
       </div>
 
@@ -180,7 +180,7 @@ export const KYCFlow = ({ userId, onKYCComplete, subaccountId }: KYCFlowProps) =
           disabled={loading}
           className="w-full bg-blue-600 hover:bg-blue-700"
         >
-          {loading ? 'Starting KYC...' : 'Start Identity Verification'}
+          {loading ? 'Iniciando KYC...' : 'Iniciar Verificação de Identidade'}
         </Button>
       )}
 
@@ -191,10 +191,10 @@ export const KYCFlow = ({ userId, onKYCComplete, subaccountId }: KYCFlowProps) =
             variant="outline"
             className="w-full"
           >
-            Reopen Verification Window
+            Reabrir Janela de Verificação
           </Button>
           <p className="text-sm text-gray-600 text-center">
-            Complete the verification process and this page will update automatically.
+            Complete o processo de verificação e esta página será atualizada automaticamente.
           </p>
         </div>
       )}
@@ -204,7 +204,7 @@ export const KYCFlow = ({ userId, onKYCComplete, subaccountId }: KYCFlowProps) =
           onClick={onKYCComplete}
           className="w-full bg-green-600 hover:bg-green-700"
         >
-          Continue to RendeX
+          Continuar para o RendeX
         </Button>
       )}
 
@@ -215,21 +215,21 @@ export const KYCFlow = ({ userId, onKYCComplete, subaccountId }: KYCFlowProps) =
             disabled={loading}
             className="w-full bg-blue-600 hover:bg-blue-700"
           >
-            {loading ? 'Retrying KYC...' : 'Retry Verification'}
+            {loading ? 'Tentando KYC novamente...' : 'Tentar Verificação Novamente'}
           </Button>
           <p className="text-sm text-gray-600 text-center">
-            If you continue to have issues, please contact our support team.
+            Se você continuar tendo problemas, entre em contato com nossa equipe de suporte.
           </p>
         </div>
       )}
 
       <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-        <h4 className="font-medium mb-2">What you&apos;ll need:</h4>
+        <h4 className="font-medium mb-2">O que você precisará:</h4>
         <ul className="text-sm text-gray-600 space-y-1">
-          <li>• Valid Brazilian ID, Passport, or Driver&apos;s License</li>
-          <li>• Your CPF (Brazilian tax ID)</li>
-          <li>• Current address information</li>
-          <li>• 5-10 minutes to complete the process</li>
+          <li>• RG brasileiro válido, Passaporte ou CNH</li>
+          <li>• Seu CPF (documento de identificação fiscal brasileiro)</li>
+          <li>• Informações do endereço atual</li>
+          <li>• 5-10 minutos para completar o processo</li>
         </ul>
       </div>
     </div>

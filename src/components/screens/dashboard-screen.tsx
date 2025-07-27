@@ -45,7 +45,7 @@ export function DashboardScreen({ onInvest, onWithdraw }: DashboardProps = {}) {
   // Removed balances state - now using direct blockchain hooks
   
   // Get connected wallet address
-  const { address: connectedWalletAddress, isConnected } = useAccount()
+  const { address: connectedWalletAddress, isConnected: _isConnected } = useAccount()
   
   // Get stBRLA balance for circular progress display
   const { balance: stBrlaBalance, isLoading: stBrlaLoading, refetch: refetchStBRLA } = useStBRLABalance()
@@ -166,7 +166,7 @@ export function DashboardScreen({ onInvest, onWithdraw }: DashboardProps = {}) {
   };
 
   const formatBRLABalance = () => {
-    if (brlaLoading) return 'Loading...';
+    if (brlaLoading) return 'Carregando...';
     if (!brlaBalance || brlaBalance === '0') return 'R$ 0,00';
     
     const num = parseFloat(brlaBalance) || 0;
@@ -177,7 +177,7 @@ export function DashboardScreen({ onInvest, onWithdraw }: DashboardProps = {}) {
   };
 
   const formatStBRLABalance = () => {
-    if (stBrlaLoading) return 'Loading...';
+    if (stBrlaLoading) return 'Carregando...';
     if (!stBrlaBalance || stBrlaBalance === '0') return 'R$ 0,00';
     
     const num = parseFloat(stBrlaBalance) || 0;
@@ -267,7 +267,7 @@ export function DashboardScreen({ onInvest, onWithdraw }: DashboardProps = {}) {
               {/* User Info */}
               <div>
                 <div className="text-sm font-semibold text-white">
-                  {farcasterProfile?.display_name || farcasterProfile?.username || 'Connected Wallet'}
+                  {farcasterProfile?.display_name || farcasterProfile?.username || 'Carteira Conectada'}
                 </div>
                 <div className="text-xs text-white/80">
                   {connectedWalletAddress ? humanizeAddress(connectedWalletAddress) : 
@@ -318,8 +318,8 @@ export function DashboardScreen({ onInvest, onWithdraw }: DashboardProps = {}) {
         animate={{ x: 0, opacity: 1 }}
         transition={{ delay: 0.4, duration: 0.6 }}
       >
-        <h1 className="text-2xl font-light">BRLA Balance (PIX): <b>{formatBRLABalance()}</b></h1>
-        <p className="text-sm opacity-80">Available BRLA Tokens</p>
+        <h1 className="text-2xl font-light">Saldo BRLA (PIX): <b>{formatBRLABalance()}</b></h1>
+        <p className="text-sm opacity-80">Tokens BRLA Disponíveis</p>
         
         {/* Currency Toggle */}
         <div className="flex justify-end mt-2">
@@ -376,7 +376,7 @@ export function DashboardScreen({ onInvest, onWithdraw }: DashboardProps = {}) {
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 1.6, duration: 0.5 }}
               >
-                {apyLoading ? 'Loading...' : `+${currentAPY.toFixed(1)}% APY`}
+                {apyLoading ? 'Carregando...' : `+${currentAPY.toFixed(1)}% APY`}
               </motion.div>
               
               {/* Streak */}
@@ -391,7 +391,7 @@ export function DashboardScreen({ onInvest, onWithdraw }: DashboardProps = {}) {
                   animate={{ scale: [1, 1.2, 1] }}
                   transition={{ duration: 1, repeat: Infinity }}
                 />
-                <span>0 days Streak</span>
+                <span>0 dias Seguidos</span>
                 <span className="ml-1">›</span>
               </motion.div>
             </motion.div>
@@ -413,7 +413,7 @@ export function DashboardScreen({ onInvest, onWithdraw }: DashboardProps = {}) {
             onClick={handleInvest}
             className="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-2xl font-semibold text-lg shadow-lg transition-colors"
           >
-            PIX Deposit
+            Depósito PIX
           </Button>
         </motion.div>
 
@@ -423,7 +423,7 @@ export function DashboardScreen({ onInvest, onWithdraw }: DashboardProps = {}) {
             onClick={() => setShowStakingModal(true)}
             className="w-full bg-green-600 hover:bg-green-700 text-white py-4 rounded-2xl font-semibold text-lg shadow-lg transition-colors"
           >
-            🔒 Stake BRLA
+            🔒 Investir BRLA
           </Button>
         </motion.div>
 
@@ -433,7 +433,7 @@ export function DashboardScreen({ onInvest, onWithdraw }: DashboardProps = {}) {
             onClick={() => setShowUnstakingModal(true)}
             className="w-full bg-orange-600 hover:bg-orange-700 text-white py-4 rounded-2xl font-semibold text-lg shadow-lg transition-colors"
           >
-            🔓 Unstake stBRLA
+            🔓 Resgatar stBRLA
           </Button>
         </motion.div>
 
@@ -447,7 +447,7 @@ export function DashboardScreen({ onInvest, onWithdraw }: DashboardProps = {}) {
             onClick={handleWithdraw}
             className="w-full bg-transparent border-2 border-white text-white py-4 rounded-2xl font-semibold text-lg shadow-lg hover:bg-white hover:text-gray-800 transition-colors"
           >
-            Withdraw
+            Sacar
           </Button>
           {/* Soon Badge */}
           <motion.div 
@@ -457,7 +457,7 @@ export function DashboardScreen({ onInvest, onWithdraw }: DashboardProps = {}) {
               scale: [1, 1.05, 1]
             }}
           >
-            Soon
+            Em Breve
           </motion.div>
         </motion.div>
       </motion.div>

@@ -30,7 +30,7 @@ export const AveniaLoginModal = ({ isOpen, onClose, onSuccess }: AveniaLoginModa
       await login(email, password);
       setStep('validate');
     } catch (err: any) {
-      setError(err.message || 'Login failed');
+      setError(err.message || 'Login falhou');
     }
   };
 
@@ -43,7 +43,7 @@ export const AveniaLoginModal = ({ isOpen, onClose, onSuccess }: AveniaLoginModa
       onSuccess(user);
       onClose();
     } catch (err: any) {
-      setError(err.message || 'Validation failed');
+      setError(err.message || 'Validação falhou');
     }
   };
 
@@ -62,7 +62,7 @@ export const AveniaLoginModal = ({ isOpen, onClose, onSuccess }: AveniaLoginModa
         <div className="bg-white rounded-lg p-6 w-full max-w-md">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-bold">
-              {step === 'login' ? 'Login to Avenia' : 'Verify Email'}
+              {step === 'login' ? 'Login no Avenia' : 'Verificar Email'}
             </h2>
             <button onClick={handleClose} className="text-gray-500 hover:text-gray-700">
               ✕
@@ -84,42 +84,42 @@ export const AveniaLoginModal = ({ isOpen, onClose, onSuccess }: AveniaLoginModa
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="your.email@provider.com"
+                  placeholder="seu.email@provedor.com"
                   required
                 />
               </div>
               
               <div>
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">Senha</Label>
                 <Input
                   id="password"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter your password"
+                  placeholder="Digite sua senha"
                   required
                 />
               </div>
 
               <Button type="submit" disabled={loading} className="w-full">
-                {loading ? 'Sending Email...' : 'Send Email Token'}
+                {loading ? 'Enviando Email...' : 'Enviar Token por Email'}
               </Button>
             </form>
           ) : (
             <form onSubmit={handleValidateLogin} className="space-y-4">
               <p className="text-sm text-gray-600 mb-4">
-                We sent a verification code to <strong>{email}</strong>. 
-                Please check your email and enter the 6-digit code below.
+                Enviamos um código de verificação para <strong>{email}</strong>. 
+                Verifique seu email e digite o código de 6 dígitos abaixo.
               </p>
               
               <div>
-                <Label htmlFor="emailToken">Email Token</Label>
+                <Label htmlFor="emailToken">Token do Email</Label>
                 <Input
                   id="emailToken"
                   type="text"
                   value={emailToken}
                   onChange={(e) => setEmailToken(e.target.value)}
-                  placeholder="Enter 6-digit code"
+                  placeholder="Digite o código de 6 dígitos"
                   maxLength={6}
                   required
                 />
@@ -132,10 +132,10 @@ export const AveniaLoginModal = ({ isOpen, onClose, onSuccess }: AveniaLoginModa
                   onClick={() => setStep('login')}
                   className="flex-1"
                 >
-                  Back
+                  Voltar
                 </Button>
                 <Button type="submit" disabled={loading} className="flex-1">
-                  {loading ? 'Verifying...' : 'Verify & Login'}
+                  {loading ? 'Verificando...' : 'Verificar e Fazer Login'}
                 </Button>
               </div>
             </form>
