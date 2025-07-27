@@ -295,7 +295,7 @@ export function WelcomeScreen({ onNext }: ScreenProps = {}) {
                 {context ? (
                   <div className="space-y-4">
                     {/* Show simple create account button if authenticated and ready */}
-                    {authStatus === 'authenticated' && authenticatedUser && showAccountForm ? (
+                    {authStatus === 'authenticated' && neynarUser && authenticatedUser && showAccountForm ? (
                       <motion.div
                         initial={{ y: 20, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
@@ -332,7 +332,7 @@ export function WelcomeScreen({ onNext }: ScreenProps = {}) {
                                   {isCreatingAccount ? 'Creating Account...' : 'Create Account'}
                                 </div>
                                 <div className="text-sm text-gray-600">
-                                  @{neynarUser?.username || `user${authenticatedUser.fid}`}
+                                  @{neynarUser?.username}
                                 </div>
                               </div>
                             </div>
@@ -357,23 +357,15 @@ export function WelcomeScreen({ onNext }: ScreenProps = {}) {
                       >
                         <div className="text-center space-y-4">
                           <div className="flex items-center justify-center">
-                            <div className="w-16 h-16 rounded-full bg-primary-blue/20 flex items-center justify-center">
-                              <span className="text-2xl font-bold text-primary-blue">
-                                {authenticatedUser.fid.toString().slice(-2)}
-                              </span>
-                            </div>
+                            <div className="w-12 h-12 border-2 border-primary-blue border-t-transparent rounded-full animate-spin"></div>
                           </div>
                           <div>
                             <h3 className="text-lg font-semibold text-gray-800">
-                              Welcome!
+                              {fetchingUser ? 'Fetching user data...' : 'Checking if you created an account before...'}
                             </h3>
-                            <p className="text-xs text-gray-500 mt-1">FID: {authenticatedUser.fid}</p>
-                          </div>
-                          <div className="flex items-center justify-center space-x-2">
-                            <div className="w-5 h-5 border-2 border-primary-blue border-t-transparent rounded-full animate-spin"></div>
-                            <span className="text-sm text-gray-600">
-                              {fetchingUser ? 'Loading your profile...' : 'Preparing your account...'}
-                            </span>
+                            <p className="text-sm text-gray-500 mt-2">
+                              {fetchingUser ? 'One more detail...' : 'Almost ready...'}
+                            </p>
                           </div>
                         </div>
                       </motion.div>
@@ -408,14 +400,9 @@ export function WelcomeScreen({ onNext }: ScreenProps = {}) {
             onClick={handleNext}
             className="w-full bg-primary-blue hover:bg-primary-blue/90 text-white rounded-xl h-14 text-lg"
           >
-            {user?.kycStatus === 'completed' ? (
+            {user?.kycStatus === 'completed' && (
               <>
                 Go to Dashboard
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </>
-            ) : (
-              <>
-                Start KYC Process
                 <ArrowRight className="ml-2 h-5 w-5" />
               </>
             )}

@@ -3,8 +3,6 @@
 import { useState, useEffect } from 'react';
 import { Dialog } from '../ui/dialog';
 import { Button } from '../ui/Button';
-import { Label } from '../ui/label';
-import { Input } from '../ui/input';
 import { useAvenia } from '../../hooks/useAvenia';
 import { useRealTimeUpdates } from '../../hooks/useRealTimeUpdates';
 import QRCode from 'qrcode';
@@ -159,9 +157,9 @@ export const PIXPaymentModal = ({ isOpen, onClose, userId, onSuccess, walletAddr
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-        <div className="bg-white rounded-lg p-6 w-full max-w-md">
+        <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold">
+            <h2 className="text-xl font-bold text-gray-900">
               {step === 'amount' && 'PIX to BRLA'}
               {step === 'payment' && 'Complete Payment'}
               {step === 'success' && 'Payment Successful'}
@@ -183,12 +181,6 @@ export const PIXPaymentModal = ({ isOpen, onClose, userId, onSuccess, walletAddr
             </div>
           )}
 
-          {connectionError && (
-            <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-4">
-              Real-time updates disconnected: {connectionError}
-            </div>
-          )}
-
           <div className="flex items-center gap-2 mb-4">
             <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
             <span className="text-sm text-gray-600">
@@ -199,8 +191,8 @@ export const PIXPaymentModal = ({ isOpen, onClose, userId, onSuccess, walletAddr
           {step === 'amount' && (
             <form onSubmit={handleCreatePayment} className="space-y-4">
               <div>
-                <Label htmlFor="amount" className="text-base font-semibold mb-3 block">Amount (BRLA)</Label>
-                <Input
+                <label htmlFor="amount" className="text-base font-semibold mb-3 block text-gray-800">Amount (BRLA)</label>
+                <input
                   id="amount"
                   type="text"
                   inputMode="decimal"
@@ -208,14 +200,14 @@ export const PIXPaymentModal = ({ isOpen, onClose, userId, onSuccess, walletAddr
                   onChange={handleAmountChange}
                   placeholder="0.00"
                   required
-                  className="text-black text-3xl font-bold py-6 px-4 text-center h-20 w-full border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                  className="text-black text-3xl font-bold py-6 px-4 text-center h-20 w-full border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 placeholder-gray-400"
                 />
                 <p className="text-sm text-gray-600 mt-3 text-center">
                   You will receive {displayAmount} BRLA stablecoins
                 </p>
               </div>
 
-              <Button type="submit" disabled={loading || getNumericAmount() <= 0} className="w-full">
+              <Button type="submit" disabled={loading || getNumericAmount() <= 0} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed">
                 {loading ? 'Creating Payment...' : `Create PIX Payment - ${formatCurrency(amount)}`}
               </Button>
             </form>
@@ -252,7 +244,7 @@ export const PIXPaymentModal = ({ isOpen, onClose, userId, onSuccess, walletAddr
                   </div>
                 )}
                 
-                <div className="bg-gray-50 p-3 rounded border text-xs break-all">
+                <div className="bg-gray-50 p-3 rounded border text-xs break-all text-gray-900 font-mono">
                   {brCode}
                 </div>
                 
@@ -260,7 +252,7 @@ export const PIXPaymentModal = ({ isOpen, onClose, userId, onSuccess, walletAddr
                   onClick={copyBrCode}
                   variant="outline"
                   size="sm"
-                  className="mt-2"
+                  className="mt-2 bg-white text-gray-900 border-gray-300 hover:bg-gray-50"
                 >
                   Copy PIX Code
                 </Button>

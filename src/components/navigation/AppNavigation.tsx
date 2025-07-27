@@ -28,7 +28,7 @@ const navigationItems: NavigationItem[] = [
   }
 ];
 
-const flowPages = ["/welcome", "/analysis", "/ready", "/notifications", "/dashboard"];
+const flowPages = ["/", "/welcome", "/analysis", "/ready", "/notifications", "/dashboard"];
 
 export function AppNavigation() {
   const router = useRouter();

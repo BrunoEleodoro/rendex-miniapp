@@ -325,6 +325,49 @@ export function useStakeBRLA(): StakingHookReturn {
   }
 }
 
+// Hook to unstake stBRLA for BRLA
+export function useUnstakeBRLA() {
+  const { address } = useAccount()
+  const { writeContract, data: hash, isPending } = useWriteContract()
+
+  const { isLoading: isConfirming } = useWaitForTransactionReceipt({
+    hash,
+    chainId: TARGET_CHAIN_ID,
+  })
+
+  const unstake = (amount: string) => {
+    if (!address) return
+
+    const unstakeAmount = parseUnits(amount, CONTRACTS.STAKED_BRLA.decimals)
+    
+    const payload = {
+      address: CONTRACTS.STAKED_BRLA.address as `0x${string}`,
+      abi: STAKED_BRLA_ABI,
+      functionName: 'unstake',
+      args: [address, address, unstakeAmount], // from, to, stBrlaAmount
+      chainId: TARGET_CHAIN_ID,
+    }
+    
+    console.log('🔍 [DEBUG] Unstake transaction payload:', {
+      contractAddress: payload.address,
+      userAddress: address,
+      unstakeAmount: unstakeAmount.toString(),
+      unstakeAmountFormatted: amount,
+      chainId: payload.chainId
+    })
+    
+    writeContract(payload)
+  }
+
+  return {
+    unstake,
+    hash,
+    isPending,
+    isConfirming,
+    isLoading: isPending || isConfirming,
+  }
+}
+
 // Hook to get stBRLA current price from contract
 export function useStBRLAPrice() {
   const { chainId } = useAccount()

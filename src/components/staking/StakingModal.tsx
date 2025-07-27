@@ -195,7 +195,7 @@ export const StakingModal = ({ isOpen, onClose }: StakingModalProps) => {
                     value={amount}
                     onChange={(e) => handleAmountChange(e.target.value)}
                     placeholder="0.00"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg text-lg font-mono focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg text-lg font-mono text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                   <button
                     onClick={handleMaxClick}
@@ -217,19 +217,19 @@ export const StakingModal = ({ isOpen, onClose }: StakingModalProps) => {
                   <div className="grid grid-cols-2 gap-2 text-xs">
                     <div>
                       <span className="text-gray-500">Daily:</span>
-                      <span className="font-medium ml-1">R$ {rewardsEstimate.daily.toFixed(2)}</span>
+                      <span className="font-medium ml-1 text-gray-700">R$ {rewardsEstimate.daily.toFixed(2)}</span>
                     </div>
                     <div>
                       <span className="text-gray-500">Monthly:</span>
-                      <span className="font-medium ml-1">R$ {rewardsEstimate.monthly.toFixed(2)}</span>
+                      <span className="font-medium ml-1 text-gray-700">R$ {rewardsEstimate.monthly.toFixed(2)}</span>
                     </div>
                     <div>
                       <span className="text-gray-500">Weekly:</span>
-                      <span className="font-medium ml-1">R$ {rewardsEstimate.weekly.toFixed(2)}</span>
+                      <span className="font-medium ml-1 text-gray-700">R$ {rewardsEstimate.weekly.toFixed(2)}</span>
                     </div>
                     <div>
                       <span className="text-gray-500">Yearly:</span>
-                      <span className="font-medium ml-1">R$ {rewardsEstimate.yearly.toFixed(2)}</span>
+                      <span className="font-medium ml-1 text-gray-700">R$ {rewardsEstimate.yearly.toFixed(2)}</span>
                     </div>
                   </div>
                 </div>
@@ -315,11 +315,11 @@ export const StakingModal = ({ isOpen, onClose }: StakingModalProps) => {
               <div className="bg-blue-50 rounded-lg p-4">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Amount:</span>
-                  <span className="font-medium">{amount} BRLA</span>
+                  <span className="font-medium text-gray-700">{amount} BRLA</span>
                 </div>
                 <div className="flex justify-between text-sm mt-1">
-                  <span className="text-gray-600">You&apos;ll receive:</span>
-                  <span className="font-medium">≈ {amount} stBRLA</span>
+                  <span className="text-gray-600">You'll receive:</span>
+                  <span className="font-medium text-gray-700">≈ {amount} stBRLA</span>
                 </div>
               </div>
             </div>

@@ -1,7 +1,7 @@
 import { Metadata } from "next";
-import { redirect } from "next/navigation";
 import { APP_NAME, APP_DESCRIPTION, APP_OG_IMAGE_URL } from "~/lib/constants";
 import { getMiniAppEmbedMetadata } from "~/lib/utils";
+import { WelcomeScreen } from "~/components/screens/welcome-screen";
 
 export const revalidate = 300;
 
@@ -20,6 +20,5 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default function Home() {
-  // Redirect to welcome page for new router structure
-  redirect("/welcome");
+  return <WelcomeScreen />;
 }

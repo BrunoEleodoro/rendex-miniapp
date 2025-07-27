@@ -3,11 +3,12 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "~/components/ui/Button"
-import { User, TrendingUp, Settings } from "lucide-react"
+import { User, TrendingUp, Settings, RotateCcw } from "lucide-react"
 import { motion } from "framer-motion"
 // import { BalanceCard } from "~/components/avenia/BalanceCard"
 import { PIXPaymentModal } from "~/components/avenia/PIXPaymentModal"
 import { StakingModal } from "~/components/staking/StakingModal"
+import { UnstakingModal } from "~/components/staking/UnstakingModal"
 import { NetworkIndicator } from "~/components/ui/NetworkIndicator"
 import { sdk } from "@farcaster/miniapp-sdk"
 import { useAccount } from "wagmi"
@@ -38,22 +39,47 @@ export function DashboardScreen({ onInvest, onWithdraw }: DashboardProps = {}) {
   const [user, setUser] = useState<User | null>(null)
   const [showPixModal, setShowPixModal] = useState(false)
   const [showStakingModal, setShowStakingModal] = useState(false)
+  const [showUnstakingModal, setShowUnstakingModal] = useState(false)
+  const [farcasterProfile, setFarcasterProfile] = useState<any>(null)
+  const [isRefreshing, setIsRefreshing] = useState(false)
   // Removed balances state - now using direct blockchain hooks
   
   // Get connected wallet address
-  const { address: connectedWalletAddress } = useAccount()
+  const { address: connectedWalletAddress, isConnected } = useAccount()
   
   // Get stBRLA balance for circular progress display
-  const { balance: stBrlaBalance, isLoading: stBrlaLoading } = useStBRLABalance()
+  const { balance: stBrlaBalance, isLoading: stBrlaLoading, refetch: refetchStBRLA } = useStBRLABalance()
   
   // Get BRLA balance 
-  const { balance: _brlaBalance, isLoading: _brlaLoading } = useBRLABalance()
+  const { balance: brlaBalance, isLoading: brlaLoading, refetch: refetchBRLA } = useBRLABalance()
   
   // Get APY data for display
   const { currentAPY, isLoading: apyLoading } = useStBRLAAPY()
   
   // Initialize the app and check user status
   useEffect(() => {
+    const fetchFarcasterProfile = async (fid: string) => {
+      try {
+        console.log('[DashboardScreen] Fetching Farcaster profile for FID:', fid);
+        const response = await fetch(`/api/users?fids=${fid}`);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.users && data.users.length > 0) {
+          console.log('[DashboardScreen] Successfully fetched Farcaster profile:', data.users[0]);
+          setFarcasterProfile(data.users[0]);
+        } else {
+          console.warn('[DashboardScreen] No profile data returned from API');
+        }
+      } catch (error) {
+        console.error('[DashboardScreen] Failed to fetch Farcaster profile:', error);
+      }
+    };
+
     const initializeApp = async () => {
       try {
         // Call ready() to hide splash screen and indicate app is loaded
@@ -66,28 +92,38 @@ export function DashboardScreen({ onInvest, onWithdraw }: DashboardProps = {}) {
       }
     };
 
-    initializeApp();
-
-    // Check user status
-    console.log('[DashboardScreen] Checking user status');
-    const savedUser = localStorage.getItem('rendex_user');
-    
-    if (savedUser) {
-      try {
-        const userData = JSON.parse(savedUser);
-        console.log('[DashboardScreen] Found user:', {
-          id: userData.id,
-          email: userData.email,
-          kycStatus: userData.kycStatus
-        });
-        setUser(userData);
-      } catch (error) {
-        console.error('[DashboardScreen] Failed to parse saved user:', error);
-        localStorage.removeItem('rendex_user');
+    const loadUserData = async () => {
+      // Check user status
+      console.log('[DashboardScreen] Checking user status');
+      const savedUser = localStorage.getItem('rendex_user');
+      
+      if (savedUser) {
+        try {
+          const userData = JSON.parse(savedUser);
+          console.log('[DashboardScreen] Found user:', {
+            id: userData.id,
+            email: userData.email,
+            kycStatus: userData.kycStatus
+          });
+          setUser(userData);
+          
+          // If this is a Farcaster user, fetch their profile data
+          if (userData.id && userData.id.includes('farcaster_')) {
+            const fid = userData.id.replace('farcaster_', '');
+            await fetchFarcasterProfile(fid);
+          }
+        } catch (error) {
+          console.error('[DashboardScreen] Failed to parse saved user:', error);
+          localStorage.removeItem('rendex_user');
+        }
+      } else {
+        console.log('[DashboardScreen] No user found');
       }
-    } else {
-      console.log('[DashboardScreen] No user found');
-    }
+    };
+
+    // Initialize everything at component mount
+    initializeApp();
+    loadUserData();
   }, []);
   
   const handleInvest = () => {
@@ -129,7 +165,18 @@ export function DashboardScreen({ onInvest, onWithdraw }: DashboardProps = {}) {
     }).format(num);
   };
 
-  const formatStakedBalance = () => {
+  const formatBRLABalance = () => {
+    if (brlaLoading) return 'Loading...';
+    if (!brlaBalance || brlaBalance === '0') return 'R$ 0,00';
+    
+    const num = parseFloat(brlaBalance) || 0;
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    }).format(num);
+  };
+
+  const formatStBRLABalance = () => {
     if (stBrlaLoading) return 'Loading...';
     if (!stBrlaBalance || stBrlaBalance === '0') return 'R$ 0,00';
     
@@ -138,6 +185,40 @@ export function DashboardScreen({ onInvest, onWithdraw }: DashboardProps = {}) {
       style: 'currency',
       currency: 'BRL',
     }).format(num);
+  };
+
+  const humanizeAddress = (address: string) => {
+    if (!address) return '';
+    return `${address.slice(0, 6)}...${address.slice(-4)}`;
+  };
+
+  const copyAddressToClipboard = async () => {
+    const address = connectedWalletAddress || user?.walletAddress;
+    if (address) {
+      try {
+        await navigator.clipboard.writeText(address);
+        console.log('[DashboardScreen] Wallet address copied to clipboard');
+        // You could add a toast notification here
+      } catch (error) {
+        console.error('[DashboardScreen] Failed to copy address:', error);
+      }
+    }
+  };
+
+  const refreshBalances = async () => {
+    setIsRefreshing(true);
+    try {
+      console.log('[DashboardScreen] Refreshing all balances...');
+      await Promise.all([
+        refetchBRLA(),
+        refetchStBRLA()
+      ]);
+      console.log('[DashboardScreen] All balances refreshed successfully');
+    } catch (error) {
+      console.error('[DashboardScreen] Failed to refresh balances:', error);
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   return (
@@ -157,14 +238,25 @@ export function DashboardScreen({ onInvest, onWithdraw }: DashboardProps = {}) {
       >
         {/* User Info - Left Side */}
         <motion.div 
-          className="flex items-center space-x-3"
+          className="flex items-center space-x-3 cursor-pointer"
           whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={copyAddressToClipboard}
         >
           {user ? (
             <>
               {/* User Avatar */}
-              <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg">
-                {user.id && user.id.includes('farcaster_') ? (
+              <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg overflow-hidden">
+                {farcasterProfile?.pfp_url ? (
+                  <img
+                    src={farcasterProfile.pfp_url}
+                    alt={`${farcasterProfile.display_name || farcasterProfile.username} avatar`}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.src = '/images/default-avatar.png';
+                    }}
+                  />
+                ) : user.id && user.id.includes('farcaster_') ? (
                   <span className="text-lg font-bold text-blue-500">
                     {user.id.replace('farcaster_', '').slice(-2)}
                   </span>
@@ -175,10 +267,12 @@ export function DashboardScreen({ onInvest, onWithdraw }: DashboardProps = {}) {
               {/* User Info */}
               <div>
                 <div className="text-sm font-semibold text-white">
-                  Connected Wallet
+                  {farcasterProfile?.display_name || farcasterProfile?.username || 'Connected Wallet'}
                 </div>
                 <div className="text-xs text-white/80">
-                  @{user.subaccountId || 'user'}
+                  {connectedWalletAddress ? humanizeAddress(connectedWalletAddress) : 
+                   user.walletAddress ? humanizeAddress(user.walletAddress) : 
+                   `@${user.subaccountId || 'user'}`}
                 </div>
               </div>
             </>
@@ -193,15 +287,28 @@ export function DashboardScreen({ onInvest, onWithdraw }: DashboardProps = {}) {
           )}
         </motion.div>
         
-        {/* Settings Button - Right Side */}
-        <motion.div 
-          className="w-10 h-10 bg-white bg-opacity-20 rounded-full flex items-center justify-center cursor-pointer"
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => console.log('[DashboardScreen] Settings clicked')}
-        >
-          <Settings className="w-6 h-6 text-white" />
-        </motion.div>
+        {/* Right Side - Network Indicator, Refresh, and Settings */}
+        <div className="flex items-center space-x-3">
+          <NetworkIndicator />
+          <motion.div 
+            className="w-10 h-10 bg-white bg-opacity-20 rounded-full flex items-center justify-center cursor-pointer"
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={refreshBalances}
+            animate={isRefreshing ? { rotate: 360 } : {}}
+            transition={isRefreshing ? { duration: 1, repeat: Infinity, ease: "linear" } : {}}
+          >
+            <RotateCcw className="w-5 h-5 text-white" />
+          </motion.div>
+          <motion.div 
+            className="w-10 h-10 bg-white bg-opacity-20 rounded-full flex items-center justify-center cursor-pointer"
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => console.log('[DashboardScreen] Settings clicked')}
+          >
+            <Settings className="w-6 h-6 text-white" />
+          </motion.div>
+        </div>
       </motion.div>
 
       {/* Balance Section */}
@@ -211,8 +318,8 @@ export function DashboardScreen({ onInvest, onWithdraw }: DashboardProps = {}) {
         animate={{ x: 0, opacity: 1 }}
         transition={{ delay: 0.4, duration: 0.6 }}
       >
-        <h1 className="text-2xl font-light">Staked Balance</h1>
-        <p className="text-sm opacity-80">stBRLA Holdings</p>
+        <h1 className="text-2xl font-light">BRLA Balance (PIX): <b>{formatBRLABalance()}</b></h1>
+        <p className="text-sm opacity-80">Available BRLA Tokens</p>
         
         {/* Currency Toggle */}
         <div className="flex justify-end mt-2">
@@ -261,7 +368,7 @@ export function DashboardScreen({ onInvest, onWithdraw }: DashboardProps = {}) {
                 animate={{ scale: 1 }}
                 transition={{ delay: 1.4, duration: 0.5, type: "spring" }}
               >
-{formatStakedBalance()}
+                {formatStBRLABalance()}
               </motion.div>
               <motion.div 
                 className="text-green-500 font-semibold text-lg"
@@ -292,15 +399,6 @@ export function DashboardScreen({ onInvest, onWithdraw }: DashboardProps = {}) {
         </div>
       </motion.div>
 
-      {/* Network Indicator */}
-      <motion.div
-        className="px-4 mt-6 max-w-sm mx-auto flex justify-center"
-        initial={{ y: 30, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 1.8, duration: 0.6 }}
-      >
-        <NetworkIndicator />
-      </motion.div>
 
       {/* Action Buttons */}
       <motion.div 
@@ -309,13 +407,13 @@ export function DashboardScreen({ onInvest, onWithdraw }: DashboardProps = {}) {
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 2, duration: 0.6 }}
       >
-        {/* PIX Invest Button */}
+        {/* PIX Deposit Button */}
         <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
           <Button
             onClick={handleInvest}
             className="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-2xl font-semibold text-lg shadow-lg transition-colors"
           >
-            PIX INVEST
+            PIX Deposit
           </Button>
         </motion.div>
 
@@ -329,6 +427,16 @@ export function DashboardScreen({ onInvest, onWithdraw }: DashboardProps = {}) {
           </Button>
         </motion.div>
 
+        {/* Unstake stBRLA Button */}
+        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+          <Button
+            onClick={() => setShowUnstakingModal(true)}
+            className="w-full bg-orange-600 hover:bg-orange-700 text-white py-4 rounded-2xl font-semibold text-lg shadow-lg transition-colors"
+          >
+            🔓 Unstake stBRLA
+          </Button>
+        </motion.div>
+
         {/* Withdraw Button */}
         <motion.div 
           className="relative"
@@ -337,7 +445,7 @@ export function DashboardScreen({ onInvest, onWithdraw }: DashboardProps = {}) {
         >
           <Button
             onClick={handleWithdraw}
-            className="w-full bg-white text-gray-800 py-4 rounded-2xl font-semibold text-lg shadow-lg hover:bg-gray-50 transition-colors"
+            className="w-full bg-transparent border-2 border-white text-white py-4 rounded-2xl font-semibold text-lg shadow-lg hover:bg-white hover:text-gray-800 transition-colors"
           >
             Withdraw
           </Button>
@@ -348,43 +456,11 @@ export function DashboardScreen({ onInvest, onWithdraw }: DashboardProps = {}) {
               rotate: [0, -5, 5, 0],
               scale: [1, 1.05, 1]
             }}
-            transition={{ 
-              duration: 2,
-              repeat: Infinity,
-              repeatType: "reverse"
-            }}
           >
             Soon
           </motion.div>
         </motion.div>
       </motion.div>
-
-
-      {/* Decorative Elements with Animation */}
-      <motion.div 
-        className="absolute top-20 right-8 w-32 h-32 bg-white bg-opacity-5 rounded-full"
-        animate={{ 
-          x: [0, 10, 0],
-          y: [0, -5, 0]
-        }}
-        transition={{ 
-          duration: 6,
-          repeat: Infinity,
-          ease: "easeInOut"
-        }}
-      />
-      <motion.div 
-        className="absolute bottom-32 left-4 w-16 h-16 bg-white bg-opacity-5 rounded-full"
-        animate={{ 
-          x: [0, -5, 0],
-          y: [0, 5, 0]
-        }}
-        transition={{ 
-          duration: 4,
-          repeat: Infinity,
-          ease: "easeInOut"
-        }}
-      />
 
       {/* Note: BalanceCard removed - now using direct blockchain hooks */}
 
@@ -392,13 +468,16 @@ export function DashboardScreen({ onInvest, onWithdraw }: DashboardProps = {}) {
       {showPixModal && user && (
         <PIXPaymentModal
           isOpen={showPixModal}
-          onClose={() => setShowPixModal(false)}
+          onClose={() => {
+            setShowPixModal(false);
+            refreshBalances();
+          }}
           userId={user.subaccountId || user.id}
           walletAddress={connectedWalletAddress || user.walletAddress}
           onSuccess={() => {
             console.log('[DashboardScreen] PIX payment completed successfully');
             setShowPixModal(false);
-            // Refresh balances after successful payment
+            refreshBalances();
           }}
         />
       )}
@@ -406,7 +485,19 @@ export function DashboardScreen({ onInvest, onWithdraw }: DashboardProps = {}) {
       {/* Staking Modal */}
       <StakingModal
         isOpen={showStakingModal}
-        onClose={() => setShowStakingModal(false)}
+        onClose={() => {
+          setShowStakingModal(false);
+          refreshBalances();
+        }}
+      />
+
+      {/* Unstaking Modal */}
+      <UnstakingModal
+        isOpen={showUnstakingModal}
+        onClose={() => {
+          setShowUnstakingModal(false);
+          refreshBalances();
+        }}
       />
     </motion.div>
   )
